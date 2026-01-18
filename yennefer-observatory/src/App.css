@@ -1,0 +1,52 @@
+:root {
+  --neon: #bd00ff;
+  --glass: rgba(15, 15, 25, 0.4);
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #e0e0e0;
+}
+
+body { margin: 0; background: #000; color: var(--text); font-family: 'Courier New', monospace; overflow: hidden; }
+.observatory { width: 100vw; height: 100vh; position: relative; }
+.canvas-layer { position: absolute; inset: 0; z-index: 0; }
+
+.ui-layer {
+  position: absolute; inset: 0; z-index: 10;
+  pointer-events: none; /* Allows clicking through to 3D where empty */
+  padding: 40px; display: flex; justify-content: space-between;
+}
+
+.glass-panel {
+  pointer-events: auto;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  padding: 20px; border-radius: 8px;
+  max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column;
+}
+.left { width: 250px; }
+.right { width: 320px; }
+
+h2 { border-bottom: 1px solid var(--neon); padding-bottom: 5px; margin-top: 0; font-size: 0.9rem; letter-spacing: 2px; text-shadow: 0 0 10px var(--neon); }
+
+.entry-item { cursor: pointer; padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.3s; }
+.entry-item:hover { color: var(--neon); padding-left: 5px; }
+.entry-item .date { font-size: 0.7rem; opacity: 0.6; }
+
+.terminal-bar {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+  pointer-events: auto; background: var(--glass); padding: 10px 20px;
+  border-radius: 20px; border: 1px solid var(--neon);
+  display: flex; gap: 15px; align-items: center;
+}
+.stabilize-btn { background: var(--neon); border: none; color: white; padding: 5px 15px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px var(--neon); }
+
+/* MODAL */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 20;
+  display: flex; align-items: center; justify-content: center; pointer-events: auto;
+}
+.modal-content {
+  background: #111; border: 1px solid var(--neon); padding: 40px;
+  max-width: 600px; width: 90%; box-shadow: 0 0 40px rgba(189,0,255,0.2);
+}
+.body-text { line-height: 1.6; white-space: pre-wrap; margin-top: 20px; }
