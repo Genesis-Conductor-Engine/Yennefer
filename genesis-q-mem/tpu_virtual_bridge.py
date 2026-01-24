@@ -23,6 +23,7 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional
 import hashlib
+import warnings
 
 try:
     import cupy as cp
@@ -30,6 +31,12 @@ try:
 except ImportError:
     import numpy as cp
     CUDA_AVAILABLE = False
+    warnings.warn(
+        "CuPy (GPU acceleration) is not available; falling back to NumPy. "
+        "This may significantly reduce performance and some GPU-specific behaviors "
+        "may not be supported.",
+        RuntimeWarning,
+    )
 
 
 class ReverseInferenceQuantizer:
@@ -369,9 +376,6 @@ async def main():
                 print("\n⚠️ Ollama not responding, starting anyway...")
     except:
         print("\n⚠️ Ollama connection failed, will retry...")
-    
-    orchestrator = HybridQuantumOrchestrator()
-    await orchestrator.run()
     
     orchestrator = HybridQuantumOrchestrator()
     await orchestrator.run()

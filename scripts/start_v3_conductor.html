@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Start GenesisV3 Conductor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" integrity="sha512-5xmXxdFE+kmc9hDqz8tlRY/rpBdGE0fEkt6KpkPs9fgvbopbGt+MB0nnXh1zv9KiwmtBmt9+zk/AgPBagcsWFQ==" crossorigin="anonymous"></script>
     <style>
         body { font-family: monospace; background: #1a1a2e; color: #0f0; padding: 40px; }
         .container { max-width: 600px; margin: 0 auto; }
@@ -22,7 +22,7 @@
         <button onclick="connectAndStart()">🔗 Connect & Start Conductor</button>
         
         <div style="margin-top: 30px; font-size: 12px;">
-            <p>Contract: 0x851936cA8874c05f1eDc2f5Fc2e6A3Cd97c7205E</p>
+            <p>Contract: <span id="contractAddress"></span></p>
             <p>Network: Base Mainnet (8453)</p>
             <p>Owner: MPCVault (0x029472221aBa41446821777136eB82Ad171D04e6)</p>
         </div>
@@ -30,7 +30,28 @@
     
     <script>
         const CONTRACT = '0x851936cA8874c05f1eDc2f5Fc2e6A3Cd97c7205E';
-        const ABI = ['function startConductor() external', 'function conductorActive() view returns (bool)'];
+        const ABI = [
+            {
+                "inputs": [],
+                "name": "startConductor",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "conductorActive",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
         
         function log(msg, isError = false) {
             document.getElementById('status').innerHTML = msg;
@@ -83,6 +104,13 @@
                 log('Error: ' + e.message, true);
             }
         }
+        
+        window.addEventListener('DOMContentLoaded', function () {
+            var contractAddressElement = document.getElementById('contractAddress');
+            if (contractAddressElement) {
+                contractAddressElement.textContent = CONTRACT;
+            }
+        });
     </script>
 </body>
 </html>

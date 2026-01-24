@@ -6,6 +6,7 @@
 
 const { ethers } = require("ethers");
 const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 // Configuration
@@ -13,6 +14,8 @@ const QFLOP_TOKEN_ADDRESS = "0xa8F5e136aa74803B8DB377a14f79F6c8Dd3959c7";
 const RPC_URL = "https://mainnet.base.org";
 const MINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const STATE_FILE = "/dev/shm/qmcp_cuda_maxpower.json";
+const LOG_DIR = process.env.QFLOP_LOG_DIR || "/home/yenn/logs";
+const LOG_FILE = path.join(LOG_DIR, "qflop_mints.jsonl");
 
 // Get private key from .env
 const PRIVATE_KEY = process.env.BASE_PRIVATE_KEY || process.env.ETH_PRIVATE_KEY;
@@ -101,7 +104,12 @@ class QFLOPMinter {
             const balance = await this.provider.getBalance(this.wallet.address);
             const feeData = await this.provider.getFeeData();
             const estimatedGas = 100000n; // Estimate
-            const gasCost = estimatedGas * feeData.gasPrice;
+            const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas;
+            if (gasPrice == null) {
+                console.log("❌ Unable to determine gas price or max fee; skipping mint");
+                return;
+            }
+            const gasCost = estimatedGas * gasPrice;
             
             if (balance < gasCost) {
                 console.log("❌ Insufficient gas for mint");
@@ -145,7 +153,7 @@ class QFLOPMinter {
         };
         
         fs.appendFileSync(
-            "/home/yenn/logs/qflop_mints.jsonl",
+            LOG_FILE,
             JSON.stringify(log) + "\n"
         );
     }
@@ -169,8 +177,8 @@ class QFLOPMinter {
 }
 
 // Ensure log directory exists
-if (!fs.existsSync("/home/yenn/logs")) {
-    fs.mkdirSync("/home/yenn/logs", { recursive: true });
+if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
 const minter = new QFLOPMinter();

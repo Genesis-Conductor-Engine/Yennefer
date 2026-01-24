@@ -101,15 +101,15 @@ contract QFLOPToken {
         uint256 elapsed = block.timestamp - lastMintTimestamp;
         require(elapsed > 0, "No time elapsed");
         
-        uint256 tokensToMint = (mintRatePerSecond * elapsed) / 1e18;
+        uint256 tokensToMint = mintRatePerSecond * elapsed;
         require(tokensToMint > 0, "Too soon to mint");
         
-        totalSupply += tokensToMint * 1e18;
-        balanceOf[to] += tokensToMint * 1e18;
+        totalSupply += tokensToMint;
+        balanceOf[to] += tokensToMint;
         lastMintTimestamp = block.timestamp;
         
-        emit Transfer(address(0), to, tokensToMint * 1e18);
-        emit Mint(to, tokensToMint * 1e18, tokensToMint * 1e9);
+        emit Transfer(address(0), to, tokensToMint);
+        emit Mint(to, tokensToMint, tokensToMint / 1e9);
     }
     
     function setMinter(address newMinter) external onlyOwner {
@@ -130,6 +130,6 @@ contract QFLOPToken {
     // View functions
     function pendingMint() external view returns (uint256) {
         uint256 elapsed = block.timestamp - lastMintTimestamp;
-        return (mintRatePerSecond * elapsed) / 1e18;
+        return mintRatePerSecond * elapsed;
     }
 }

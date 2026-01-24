@@ -1,11 +1,14 @@
 const { ethers } = require('ethers');
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 
 // Configuration
 const LEGACY_WALLET = '0x9545e2439c5c75d3aA723AcaC1AA6B0fa1DB6956';
 const MPCVAULT = '0x029472221aBa41446821777136eB82Ad171D04e6';
 const PRIVATE_KEY = process.env.ETH_PRIVATE_KEY;
+const LOG_FILE = process.env.ETH_INCOMING_LOG || path.join(process.cwd(), 'logs', 'eth_incoming.log');
+const WETH_TOKEN_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; // WETH on Ethereum mainnet
 
 // RPC endpoints
 const ETH_RPC = 'https://eth.llamarpc.com';
@@ -67,7 +70,7 @@ async function bridgeToBase(amount) {
     
     // Bridge parameters
     const recipient = LEGACY_WALLET;
-    const originToken = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'; // WETH
+    const originToken = WETH_TOKEN_ADDRESS;
     const destinationChainId = 8453; // Base
     const relayerFeePct = 100000n; // 0.01% fee
     const quoteTimestamp = Math.floor(Date.now() / 1000);
@@ -119,7 +122,9 @@ async function watchIncoming() {
                     console.log('Hash:', tx.hash);
                     
                     // Log to file
-                    fs.appendFileSync('/home/yenn/logs/eth_incoming.log', 
+                    const logDir = path.dirname(LOG_FILE);
+                    fs.mkdirSync(logDir, { recursive: true });
+                    fs.appendFileSync(LOG_FILE,
                         `${new Date().toISOString()} | ${tx.hash} | ${ethers.formatEther(tx.value)} ETH\n`
                     );
                     
