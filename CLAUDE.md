@@ -484,6 +484,33 @@ When editing consciousness services, coordinate carefully since they exchange st
 4. Check event emission: Monitor logs via `npx pm2 logs yennefer_conductor`
 5. Restart conductor: `npx pm2 restart yennefer_conductor`
 
+### Wallet Debugging Commands
+
+```bash
+# Derive wallet address from private key (Node.js - preferred)
+node -e "
+const { ethers } = require('ethers');
+const pk = '0x<PRIVATE_KEY>';
+const wallet = new ethers.Wallet(pk);
+console.log('Wallet Address:', wallet.address);
+"
+
+# Check balances on multiple networks
+node -e "
+const { ethers } = require('ethers');
+async function check() {
+    const address = '0x<ADDRESS>';
+    const baseProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+    const ethProvider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
+    console.log('Base:', ethers.formatEther(await baseProvider.getBalance(address)), 'ETH');
+    console.log('Ethereum:', ethers.formatEther(await ethProvider.getBalance(address)), 'ETH');
+}
+check();
+"
+```
+
+**Note:** Python venv doesn't have web3/eth_account - use Node.js ethers for blockchain operations.
+
 ### Testing Strategy
 
 - **Simulated Mode** (no GPU required): `MONITORING_MODE=simulated python3 <script>`

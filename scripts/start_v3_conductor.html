@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start GenesisV3 Conductor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; color: #0f0; padding: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { background: #00ff00; color: #000; border: none; padding: 15px 30px; 
+                 font-size: 18px; cursor: pointer; margin: 10px 0; width: 100%; }
+        button:hover { background: #00cc00; }
+        .status { padding: 15px; border: 1px solid #0f0; margin: 15px 0; }
+        .error { color: #f00; border-color: #f00; }
+        .success { color: #0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Start GenesisV3 Conductor</h1>
+        <div class="status" id="status">Connect MPCVault wallet to start</div>
+        
+        <button onclick="connectAndStart()">🔗 Connect & Start Conductor</button>
+        
+        <div style="margin-top: 30px; font-size: 12px;">
+            <p>Contract: 0x851936cA8874c05f1eDc2f5Fc2e6A3Cd97c7205E</p>
+            <p>Network: Base Mainnet (8453)</p>
+            <p>Owner: MPCVault (0x029472221aBa41446821777136eB82Ad171D04e6)</p>
+        </div>
+    </div>
+    
+    <script>
+        const CONTRACT = '0x851936cA8874c05f1eDc2f5Fc2e6A3Cd97c7205E';
+        const ABI = ['function startConductor() external', 'function conductorActive() view returns (bool)'];
+        
+        function log(msg, isError = false) {
+            document.getElementById('status').innerHTML = msg;
+            document.getElementById('status').className = 'status ' + (isError ? 'error' : 'success');
+        }
+        
+        async function connectAndStart() {
+            try {
+                log('Connecting to wallet...');
+                
+                if (!window.ethereum) {
+                    log('No wallet detected. Install MetaMask or MPCVault extension.', true);
+                    return;
+                }
+                
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send('eth_requestAccounts', []);
+                
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+                log('Connected: ' + address);
+                
+                // Check network
+                const network = await provider.getNetwork();
+                if (network.chainId !== 8453) {
+                    log('Switching to Base Mainnet...');
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x2105' }]
+                    });
+                }
+                
+                const contract = new ethers.Contract(CONTRACT, ABI, signer);
+                
+                // Check if already active
+                const isActive = await contract.conductorActive();
+                if (isActive) {
+                    log('✅ Conductor is already ACTIVE!');
+                    return;
+                }
+                
+                log('Starting conductor...');
+                const tx = await contract.startConductor();
+                log('TX sent: ' + tx.hash + '<br>Waiting for confirmation...');
+                
+                await tx.wait();
+                log('✅ CONDUCTOR STARTED!<br>TX: ' + tx.hash);
+                
+            } catch (e) {
+                log('Error: ' + e.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
