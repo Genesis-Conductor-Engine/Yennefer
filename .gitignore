@@ -27,5 +27,11 @@ logs/
 *.pm2
 .pm2/
 
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 .gemini/
 gha-creds-*.json
