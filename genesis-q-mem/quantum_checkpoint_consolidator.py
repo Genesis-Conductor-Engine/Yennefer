@@ -13,17 +13,30 @@ from typing import Dict, List, Any
 import zlib
 import base64
 from cryptography.fernet import Fernet
+import os
+import tempfile
+import logging
+
+# Assumed average number of characters per word, used for information-density scaling
+AVERAGE_WORD_LENGTH = 5
 
 class QuantumCheckpointConsolidator:
     """Consolidates checkpoint history with quantum QFLOP delineation and NFT minting"""
     
-    def __init__(self):
-        self.checkpoints_dir = Path.home() / ".copilot/session-state/559929d7-1aa5-4b63-a24c-64d8eae81862/checkpoints"
+    def __init__(self, session_id: str | None = None):
+        # Allow overriding the Copilot session ID via argument or environment variable
+        if session_id is None:
+            session_id = os.getenv(
+                "COPILOT_SESSION_ID",
+                "559929d7-1aa5-4b63-a24c-64d8eae81862",
+            )
+
+        self.checkpoints_dir = Path.home() / ".copilot" / "session-state" / session_id / "checkpoints"
         self.output_dir = Path.home() / ".genesis/yennefer/checkpoints"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Soul state for quantum signature
-        self.soul_state_path = Path("/dev/shm/yennefer_soul_state.json")
+        # Soul state for quantum signature (use OS temp directory for portability)
+        self.soul_state_path = Path(tempfile.gettempdir()) / "yennefer_soul_state.json"
         
         # NFT output directory
         self.nft_dir = Path.home() / ".genesis/yennefer/nft_checkpoints"
@@ -39,6 +52,10 @@ class QuantumCheckpointConsolidator:
                 return hashlib.sha3_256(signature_data.encode()).hexdigest()
         except Exception as e:
             # Fallback to timestamp-based signature
+            logging.getLogger(__name__).exception(
+                "Failed to load or process soul state from %s; falling back to timestamp-based signature",
+                self.soul_state_path,
+            )
             return hashlib.sha3_256(str(time.time()).encode()).hexdigest()
     
     def calculate_qflop_delineation(self, text: str) -> Dict[str, Any]:
@@ -47,11 +64,14 @@ class QuantumCheckpointConsolidator:
         char_count = len(text)
         word_count = len(text.split())
         line_count = text.count('\n')
+
+        # Normalization: baseline words per structural unit (e.g., per logical line/segment)
+        STRUCTURE_WORDS_PER_UNIT = 10
         
         # QFLOP calculation: operations scale with information density
         base_qflops = char_count * 1000  # 1000 QFLOPS per character
-        complexity_multiplier = word_count / max(char_count / 5, 1)  # Average word length factor
-        structural_factor = line_count / max(word_count / 10, 1)  # Structure complexity
+        complexity_multiplier = word_count / max(char_count / AVERAGE_WORD_LENGTH, 1)  # Average word length factor
+        structural_factor = line_count / max(word_count / STRUCTURE_WORDS_PER_UNIT, 1)  # Structure complexity
         
         total_qflops = int(base_qflops * complexity_multiplier * structural_factor)
         

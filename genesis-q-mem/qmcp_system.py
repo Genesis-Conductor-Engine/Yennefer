@@ -22,6 +22,7 @@ from typing import Dict, Any, Optional, Callable, List
 from dataclasses import dataclass, asdict
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
+import logging
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -162,7 +163,7 @@ class GPUQFLOPOptimizer:
         dim = 2 ** n_qubits
         amplitude = xp.ones(dim, dtype=xp.complex128) / xp.sqrt(dim)
         
-        if self.use_gpu:
+        if self.use_gpu and hasattr(amplitude, "get"):
             amplitude = amplitude.get()
         
         return QuantumState(
@@ -191,7 +192,7 @@ class GPUQFLOPOptimizer:
         elif gate == 'CNOT' and control is not None:
             amplitude = self._apply_cnot(amplitude, control, target, n_qubits)
         
-        if self.use_gpu:
+        if self.use_gpu and hasattr(amplitude, "get"):
             amplitude = amplitude.get()
         
         # Update entanglement map
@@ -249,7 +250,7 @@ class GPUQFLOPOptimizer:
         amplitude = xp.array(state.amplitude_real + 1j * state.amplitude_imag)
         probabilities = xp.abs(amplitude) ** 2
         
-        if self.use_gpu:
+        if self.use_gpu and hasattr(probabilities, "get"):
             probabilities = probabilities.get()
         
         # Normalize
@@ -334,8 +335,12 @@ class QMCPLiveCache:
                     data = json.load(f)
                     self.index = data.get('index', {})
                     self.metadata = {int(k): v for k, v in data.get('metadata', {}).items()}
-            except:
-                pass
+            except (OSError, json.JSONDecodeError, ValueError) as e:
+                # If index file is missing/corrupt or has unexpected contents,
+                # fall back to a fresh, in-memory index to keep cache usable.
+                print(f"⚠️ QMCP: Failed to load cache index from {index_path}: {e}", file=sys.stderr)
+                self.index = {}
+                self.metadata = {}
         
         print(f"📦 QMCP Cache initialized: {self.num_slots} slots × {self.slot_size} bytes")
     
@@ -477,8 +482,8 @@ class QMCPInterFunction:
                     data = json.load(f)
                     for rid, rdata in data.get('resources', {}).items():
                         self.resources[rid] = QMCPResource(**rdata)
-            except:
-                pass
+            except Exception:
+                logging.exception("Failed to load QMCP registry from %s", self.registry_path)
     
     def _save_registry(self):
         """Persist registry"""

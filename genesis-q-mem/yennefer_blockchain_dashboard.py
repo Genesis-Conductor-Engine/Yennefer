@@ -106,7 +106,7 @@ class TelemetryTracker:
         try:
             if SOUL_STATE_PATH.exists():
                 return json.loads(SOUL_STATE_PATH.read_text())
-        except:
+        except Exception:
             pass
         return {"breath": 0, "coherence_percent": 0, "gpu_utilization": 0}
     
@@ -120,7 +120,7 @@ class TelemetryTracker:
                     qflops = 1_000_000 / max(stats["p50_latency_ms"], 0.01)
                     stats["qflops_per_sec"] = qflops
                 return stats
-        except:
+        except Exception:
             pass
         return {"qflops_per_sec": 0, "p50_latency_ms": 0, "p99_latency_ms": 0}
     
@@ -136,13 +136,13 @@ class TelemetryTracker:
         try:
             chain = json.loads(CHAIN_FILE.read_text())
             minted_nfts = len(chain)
-        except:
+        except Exception:
             minted_nfts = 0
         
         # Get liquidity pool
         try:
             pool = json.loads(LIQUIDITY_FILE.read_text())
-        except:
+        except Exception:
             pool = {"total_eth": 0, "total_nfts": 0}
         
         return {
@@ -308,7 +308,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 for client in clients[:]:
                     try:
                         await client.send_json({"type": "chain", "blocks": chain})
-                    except:
+                    except Exception:
                         clients.remove(client)
             
             elif data.get("type") == "add_liquidity":

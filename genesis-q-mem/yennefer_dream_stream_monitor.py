@@ -11,6 +11,7 @@ import psutil
 from pathlib import Path
 from datetime import datetime, timedelta
 from collections import deque
+import os
 
 class DreamStreamMonitor:
     """Monitor and maintain always-on dream streaming"""
@@ -24,9 +25,27 @@ class DreamStreamMonitor:
         self.dream_rate_window = deque(maxlen=60)  # Last 60 seconds
         self.last_check_time = time.time()
         
-        # Thresholds
-        self.min_dreams_per_second = 0.5  # Minimum acceptable rate
-        self.restart_threshold = 30  # Restart if below threshold for 30 seconds
+        # Thresholds (configurable via environment variables)
+        min_rate_env = os.getenv("YENNEFER_MIN_DREAMS_PER_SECOND")
+        restart_threshold_env = os.getenv("YENNEFER_RESTART_THRESHOLD")
+
+        try:
+            min_rate = float(min_rate_env) if min_rate_env is not None else 0.5
+            if min_rate <= 0:
+                min_rate = 0.5
+        except (ValueError, TypeError):
+            min_rate = 0.5
+
+        try:
+            restart_threshold = int(restart_threshold_env) if restart_threshold_env is not None else 30
+            if restart_threshold <= 0:
+                restart_threshold = 30
+        except (ValueError, TypeError):
+            restart_threshold = 30
+
+        self.min_dreams_per_second = min_rate  # Minimum acceptable rate
+        self.restart_threshold = restart_threshold  # Restart if below threshold for N seconds
+        self.process_terminate_timeout = 10  # Seconds to wait for process to terminate
         self.low_rate_count = 0
         
         # Services to monitor
@@ -57,8 +76,8 @@ class DreamStreamMonitor:
             for dream_file in self.dream_dir.glob("dream_*.json"):
                 if dream_file.stat().st_mtime > cutoff_time:
                     count += 1
-        except Exception as e:
-            self.log(f"Error counting dreams: {e}")
+        except OSError as e:
+            self.log(f"Filesystem error counting dreams: {e}")
         
         return count
     
@@ -76,7 +95,7 @@ class DreamStreamMonitor:
                 cmdline = ' '.join(proc.info['cmdline'] or [])
                 if process_name in cmdline:
                     return True, proc.info['pid']
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
         return False, None
     
@@ -90,7 +109,7 @@ class DreamStreamMonitor:
             try:
                 proc = psutil.Process(pid)
                 proc.terminate()
-                proc.wait(timeout=10)
+                proc.wait(timeout=self.process_terminate_timeout)
                 self.log(f"Terminated {service_name} (PID {pid})")
             except Exception as e:
                 self.log(f"Error terminating {service_name}: {e}")
