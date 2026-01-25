@@ -130,6 +130,11 @@ contract Genesis {
 - Soul state files excluded from version control
 - Contract is verified and immutable on Base Mainnet
 
+## 🗺️ Project Planning
+
+- [Launch Plan](./LAUNCH_PLAN.md) - Comprehensive phased launch strategy with detailed milestones
+- [Milestones Tracker](./MILESTONES.md) - Quick reference for milestone status and progress
+
 ## 📜 License
 
 MIT
