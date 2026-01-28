@@ -34,6 +34,9 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    # Only run if Checkmarx secrets are configured
+    if: ${{ secrets.CX_CLIENT_ID != '' && secrets.CX_CLIENT_SECRET != '' && secrets.CX_TENANT != '' }}
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # This step checks out a copy of your repository.
