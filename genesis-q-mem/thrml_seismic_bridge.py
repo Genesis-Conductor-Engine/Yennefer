@@ -29,7 +29,7 @@ class ThrmlSeismicBridge:
 
         # In a real implementation, this would add noise or perturbations
         # For now, we return the state as is, or maybe add small noise if state is numeric
-        return state
+        return state + jax.random.normal(key, state.shape, state.dtype) * 0.01
 
     def verify_crystallization(self, original, settled):
         """
