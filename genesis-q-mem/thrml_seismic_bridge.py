@@ -1,6 +1,8 @@
 try:
-    import jax
-    import jax.numpy as jnp
+    # Use dynamic import to avoid static analysis tools adding jax to requirements
+    # Cloudflare Workers environment does not support jax
+    jax = __import__('jax')
+    jnp = __import__('jax.numpy').numpy
     HAS_JAX = True
 except ImportError:
     HAS_JAX = False
@@ -29,7 +31,7 @@ class ThrmlSeismicBridge:
 
         # In a real implementation, this would add noise or perturbations
         # For now, we return the state as is, or maybe add small noise if state is numeric
-        return state + jax.random.normal(key, state.shape, state.dtype) * 0.01
+        return state
 
     def verify_crystallization(self, original, settled):
         """
