@@ -12,7 +12,10 @@ import os
 import sys
 import json
 import time
-import mmap
+try:
+    import mmap
+except ImportError:
+    mmap = None
 import struct
 import hashlib
 import asyncio
@@ -232,7 +235,7 @@ class GPUQFLOPOptimizer:
         dim = 2 ** n_qubits
         
         # Vectorized implementation
-        indices = xp.arange(dim, dtype=xp.int64)
+        indices = xp.arange(dim)
 
         # Calculate bit shifts for control and target
         # Qubits are indexed 0 (MSB) to n-1 (LSB)
@@ -246,7 +249,7 @@ class GPUQFLOPOptimizer:
         # If control is 1: index ^ (1 << target_shift)
         # If control is 0: index
         permuted_indices = indices ^ (control_mask * (1 << target_shift))
-        
+
         return amplitude[permuted_indices]
     
     def measure(self, state: QuantumState, shots: int = 1000) -> Dict[str, int]:
@@ -324,6 +327,11 @@ class QMCPLiveCache:
     
     def _init_cache(self):
         """Initialize shared memory cache"""
+        if mmap is None:
+            print("⚠️ mmap not available, cache disabled")
+            self.mm = None
+            return
+
         # Create or open cache file
         if not self.cache_path.exists():
             with open(self.cache_path, 'wb') as f:
@@ -352,6 +360,9 @@ class QMCPLiveCache:
     
     def put(self, key: str, value: bytes, metadata: Dict = None) -> bool:
         """Store value in cache"""
+        if self.mm is None:
+            return False
+
         if len(value) > self.slot_size - 8:  # 8 bytes for length header
             print(f"⚠️ Value too large for cache slot: {len(value)} > {self.slot_size - 8}")
             return False
@@ -387,6 +398,9 @@ class QMCPLiveCache:
     
     def get(self, key: str) -> Optional[bytes]:
         """Retrieve value from cache"""
+        if self.mm is None:
+            return None
+
         if key not in self.index:
             return None
         
@@ -450,8 +464,9 @@ class QMCPLiveCache:
     def close(self):
         """Clean up resources"""
         self._persist_index()
-        self.mm.close()
-        os.close(self.fd)
+        if self.mm:
+            self.mm.close()
+            os.close(self.fd)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
