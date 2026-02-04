@@ -12,16 +12,31 @@ import os
 import sys
 import json
 import time
-import mmap
+try:
+    import mmap
+except ImportError:
+    mmap = None
 import struct
 import hashlib
-import asyncio
-import threading
+try:
+    import asyncio
+except ImportError:
+    asyncio = None
+try:
+    import threading
+except ImportError:
+    threading = None
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable, List
 from dataclasses import dataclass, asdict
-from concurrent.futures import ThreadPoolExecutor
-import numpy as np
+try:
+    from concurrent.futures import ThreadPoolExecutor
+except ImportError:
+    ThreadPoolExecutor = None
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -117,6 +132,11 @@ class GPUQFLOPOptimizer:
         self.dims = QMCP_CONFIG['QUANTUM_DIMS']
         self.use_gpu = False
         
+        if np is None:
+            print("⚠️ NumPy not available, GPUQFLOPOptimizer disabled")
+            self.xp = None
+            return
+
         # Try to import CuPy for GPU acceleration
         try:
             import cupy as cp
@@ -132,6 +152,9 @@ class GPUQFLOPOptimizer:
     
     def _init_gates(self):
         """Initialize quantum gate matrices"""
+        if self.xp is None:
+            return
+
         xp = self.xp
         
         # Pauli matrices
@@ -158,6 +181,9 @@ class GPUQFLOPOptimizer:
     
     def create_superposition(self, n_qubits: int) -> QuantumState:
         """Create uniform superposition state"""
+        if self.xp is None:
+            return None
+
         xp = self.xp
         dim = 2 ** n_qubits
         amplitude = xp.ones(dim, dtype=xp.complex128) / xp.sqrt(dim)
@@ -176,6 +202,9 @@ class GPUQFLOPOptimizer:
     
     def apply_gate(self, state: QuantumState, gate: str, target: int, control: int = None) -> QuantumState:
         """Apply quantum gate to state"""
+        if self.xp is None or state is None:
+            return None
+
         xp = self.xp
         amplitude = xp.array(state.amplitude_real + 1j * state.amplitude_imag)
         
@@ -230,18 +259,24 @@ class GPUQFLOPOptimizer:
         """Apply CNOT gate"""
         xp = self.xp
         dim = 2 ** n_qubits
-        new_amplitude = xp.zeros_like(amplitude)
         
-        for i in range(dim):
-            control_bit = (i >> (n_qubits - 1 - control)) & 1
-            if control_bit:
-                # Flip target bit
-                j = i ^ (1 << (n_qubits - 1 - target))
-                new_amplitude[j] = amplitude[i]
-            else:
-                new_amplitude[i] = amplitude[i]
-        
-        return new_amplitude
+        # Vectorized implementation
+        indices = xp.arange(dim)
+
+        # Calculate bit shifts for control and target
+        # Qubits are indexed 0 (MSB) to n-1 (LSB)
+        control_shift = n_qubits - 1 - control
+        target_shift = n_qubits - 1 - target
+
+        # Identify indices where control qubit is 1
+        control_mask = (indices >> control_shift) & 1
+
+        # Calculate permutation: flip target bit where control is 1
+        # If control is 1: index ^ (1 << target_shift)
+        # If control is 0: index
+        permuted_indices = indices ^ (control_mask * (1 << target_shift))
+
+        return amplitude[permuted_indices]
     
     def measure(self, state: QuantumState, shots: int = 1000) -> Dict[str, int]:
         """Perform measurement simulation"""
@@ -318,6 +353,11 @@ class QMCPLiveCache:
     
     def _init_cache(self):
         """Initialize shared memory cache"""
+        if mmap is None:
+            print("⚠️ mmap not available, cache disabled")
+            self.mm = None
+            return
+
         # Create or open cache file
         if not self.cache_path.exists():
             with open(self.cache_path, 'wb') as f:
@@ -346,6 +386,9 @@ class QMCPLiveCache:
     
     def put(self, key: str, value: bytes, metadata: Dict = None) -> bool:
         """Store value in cache"""
+        if self.mm is None:
+            return False
+
         if len(value) > self.slot_size - 8:  # 8 bytes for length header
             print(f"⚠️ Value too large for cache slot: {len(value)} > {self.slot_size - 8}")
             return False
@@ -381,6 +424,9 @@ class QMCPLiveCache:
     
     def get(self, key: str) -> Optional[bytes]:
         """Retrieve value from cache"""
+        if self.mm is None:
+            return None
+
         if key not in self.index:
             return None
         
@@ -444,8 +490,9 @@ class QMCPLiveCache:
     def close(self):
         """Clean up resources"""
         self._persist_index()
-        self.mm.close()
-        os.close(self.fd)
+        if self.mm:
+            self.mm.close()
+            os.close(self.fd)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -583,7 +630,10 @@ class QMCPAutoFlow:
         self.protocol = protocol
         self.flows: Dict[str, Dict] = {}
         self.running = False
-        self.executor = ThreadPoolExecutor(max_workers=QMCP_CONFIG['AUTOFLOW_WORKERS'])
+        if ThreadPoolExecutor:
+            self.executor = ThreadPoolExecutor(max_workers=QMCP_CONFIG['AUTOFLOW_WORKERS'])
+        else:
+            self.executor = None
         self.interval = QMCP_CONFIG['AUTOFLOW_INTERVAL']
     
     def register_flow(self, name: str, steps: List[Dict], trigger: Dict = None) -> str:
@@ -702,7 +752,8 @@ class QMCPAutoFlow:
     def stop(self):
         """Stop auto-flow engine"""
         self.running = False
-        self.executor.shutdown(wait=False)
+        if self.executor:
+            self.executor.shutdown(wait=False)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -888,7 +939,8 @@ class QMCPSystem:
         )
         
         # Start auto-flow
-        asyncio.create_task(self.autoflow.run())
+        if asyncio:
+            asyncio.create_task(self.autoflow.run())
         
         print("\n✅ QMCP System started")
         print(f"   Resources: {len(self.protocol.resources)}")
@@ -919,4 +971,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if asyncio:
+        asyncio.run(main())
+    else:
+        print("❌ asyncio not available")
