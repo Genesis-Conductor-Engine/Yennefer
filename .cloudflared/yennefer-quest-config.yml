@@ -2,6 +2,10 @@ tunnel: ed8b80e3-0634-4933-a722-94d4cae6205c
 credentials-file: /home/yenn/.cloudflared/ed8b80e3-0634-4933-a722-94d4cae6205c.json
 
 ingress:
+  - hostname: yennefer.genesisconductor.io
+    service: http://observatory:80
+    originRequest:
+      noTLSVerify: true
   - hostname: yennefer.quest
     service: http://localhost:8000
     originRequest:
