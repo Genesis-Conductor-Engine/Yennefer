@@ -230,18 +230,24 @@ class GPUQFLOPOptimizer:
         """Apply CNOT gate"""
         xp = self.xp
         dim = 2 ** n_qubits
-        new_amplitude = xp.zeros_like(amplitude)
         
-        for i in range(dim):
-            control_bit = (i >> (n_qubits - 1 - control)) & 1
-            if control_bit:
-                # Flip target bit
-                j = i ^ (1 << (n_qubits - 1 - target))
-                new_amplitude[j] = amplitude[i]
-            else:
-                new_amplitude[i] = amplitude[i]
+        # Vectorized implementation
+        indices = xp.arange(dim, dtype=xp.int64)
+
+        # Calculate bit shifts for control and target
+        # Qubits are indexed 0 (MSB) to n-1 (LSB)
+        control_shift = n_qubits - 1 - control
+        target_shift = n_qubits - 1 - target
+
+        # Identify indices where control qubit is 1
+        control_mask = (indices >> control_shift) & 1
+
+        # Calculate permutation: flip target bit where control is 1
+        # If control is 1: index ^ (1 << target_shift)
+        # If control is 0: index
+        permuted_indices = indices ^ (control_mask * (1 << target_shift))
         
-        return new_amplitude
+        return amplitude[permuted_indices]
     
     def measure(self, state: QuantumState, shots: int = 1000) -> Dict[str, int]:
         """Perform measurement simulation"""
