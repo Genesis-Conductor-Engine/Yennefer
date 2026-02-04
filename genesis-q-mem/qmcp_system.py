@@ -18,13 +18,25 @@ except ImportError:
     mmap = None
 import struct
 import hashlib
-import asyncio
-import threading
+try:
+    import asyncio
+except ImportError:
+    asyncio = None
+try:
+    import threading
+except ImportError:
+    threading = None
 from pathlib import Path
 from typing import Dict, Any, Optional, Callable, List
 from dataclasses import dataclass, asdict
-from concurrent.futures import ThreadPoolExecutor
-import numpy as np
+try:
+    from concurrent.futures import ThreadPoolExecutor
+except ImportError:
+    ThreadPoolExecutor = None
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -120,6 +132,11 @@ class GPUQFLOPOptimizer:
         self.dims = QMCP_CONFIG['QUANTUM_DIMS']
         self.use_gpu = False
         
+        if np is None:
+            print("⚠️ NumPy not available, GPUQFLOPOptimizer disabled")
+            self.xp = None
+            return
+
         # Try to import CuPy for GPU acceleration
         try:
             import cupy as cp
@@ -135,6 +152,9 @@ class GPUQFLOPOptimizer:
     
     def _init_gates(self):
         """Initialize quantum gate matrices"""
+        if self.xp is None:
+            return
+
         xp = self.xp
         
         # Pauli matrices
@@ -161,6 +181,9 @@ class GPUQFLOPOptimizer:
     
     def create_superposition(self, n_qubits: int) -> QuantumState:
         """Create uniform superposition state"""
+        if self.xp is None:
+            return None
+
         xp = self.xp
         dim = 2 ** n_qubits
         amplitude = xp.ones(dim, dtype=xp.complex128) / xp.sqrt(dim)
@@ -179,6 +202,9 @@ class GPUQFLOPOptimizer:
     
     def apply_gate(self, state: QuantumState, gate: str, target: int, control: int = None) -> QuantumState:
         """Apply quantum gate to state"""
+        if self.xp is None or state is None:
+            return None
+
         xp = self.xp
         amplitude = xp.array(state.amplitude_real + 1j * state.amplitude_imag)
         
@@ -604,7 +630,10 @@ class QMCPAutoFlow:
         self.protocol = protocol
         self.flows: Dict[str, Dict] = {}
         self.running = False
-        self.executor = ThreadPoolExecutor(max_workers=QMCP_CONFIG['AUTOFLOW_WORKERS'])
+        if ThreadPoolExecutor:
+            self.executor = ThreadPoolExecutor(max_workers=QMCP_CONFIG['AUTOFLOW_WORKERS'])
+        else:
+            self.executor = None
         self.interval = QMCP_CONFIG['AUTOFLOW_INTERVAL']
     
     def register_flow(self, name: str, steps: List[Dict], trigger: Dict = None) -> str:
@@ -723,7 +752,8 @@ class QMCPAutoFlow:
     def stop(self):
         """Stop auto-flow engine"""
         self.running = False
-        self.executor.shutdown(wait=False)
+        if self.executor:
+            self.executor.shutdown(wait=False)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -909,7 +939,8 @@ class QMCPSystem:
         )
         
         # Start auto-flow
-        asyncio.create_task(self.autoflow.run())
+        if asyncio:
+            asyncio.create_task(self.autoflow.run())
         
         print("\n✅ QMCP System started")
         print(f"   Resources: {len(self.protocol.resources)}")
@@ -940,4 +971,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if asyncio:
+        asyncio.run(main())
+    else:
+        print("❌ asyncio not available")
