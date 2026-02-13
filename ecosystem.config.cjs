@@ -107,6 +107,20 @@ module.exports = {
         COMPUTE_MODE: 'local',
         ALWAYS_ON: 'true'
       }
+    },
+
+    // === CREATIVE INTELLIGENCE ===
+    {
+      name: 'genie-architect',
+      script: '/home/yenn/genesis-q-mem/yennefer_genie_architect.py',
+      interpreter: 'python3',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      restart_delay: 10000,
+      env: {
+        ALWAYS_ON: 'true'
+      }
     }
   ]
 };

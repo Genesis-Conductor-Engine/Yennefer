@@ -142,3 +142,9 @@ Raw images converted to encrypted essence for dream generation:
 ## 📜 License
 
 Proprietary - Genesis Conductor / Yennefer Project
+
+### v8.0 (Project Genie Integration)
+- **Genie Architect**: Autonomous 3D world generation powered by Gemini 2.0 Flash.
+- **Continuous Building**: Procedurally generates and injects new React Three Fiber components every 5 minutes.
+- **Dynamic Mutations**: Utilizing `import.meta.glob` for live hot-swapping of `src/components/mutations/GenieMutation.jsx`.
+- **Infinite Themes**: Supports Cyberpunk, Crystal Islands, Quantum Landscapes, and more.
