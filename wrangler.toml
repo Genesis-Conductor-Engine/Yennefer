@@ -2,5 +2,5 @@ name = "yennefer"
 main = "workers/index.js"
 compatibility_date = "2025-02-14"
 
-[placement]
-mode = "smart"
+# [placement]
+# mode = "smart"
