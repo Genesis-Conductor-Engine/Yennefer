@@ -5,11 +5,11 @@ FastAPI admin interface with authentication
 
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 import secrets
 import sqlite3
 from datetime import datetime
-from typing import Optional
+from swarm_config import SWARM_CONFIG
 
 app = FastAPI(title="Yennefer Swarm Admin")
 security = HTTPBasic()
@@ -17,6 +17,7 @@ security = HTTPBasic()
 # Admin credentials (change these!)
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "yennefer2026"  # TODO: Change this!
+
 
 def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
     """Verify admin credentials"""
@@ -30,6 +31,7 @@ def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
+
 
 @app.get("/", response_class=HTMLResponse)
 async def admin_dashboard(username: str = Depends(verify_admin)):
@@ -112,43 +114,50 @@ async def admin_dashboard(username: str = Depends(verify_admin)):
     </html>
     """
 
+
 @app.get("/admin/api/status")
 async def api_status(username: str = Depends(verify_admin)):
     """Get system status"""
     return {
         "status": "online",
         "timestamp": datetime.utcnow().isoformat(),
-        "services": {
-            "swarm_api": "running",
-            "mcp_server": "running",
-            "landing_page": "running"
-        }
+        "services": {"swarm_api": "running", "mcp_server": "running", "landing_page": "running"},
     }
+
 
 @app.get("/admin/api/users/count")
 async def user_count(username: str = Depends(verify_admin)):
     """Get total user count"""
     try:
-        conn = sqlite3.connect("/home/yenn/.yennefer/subscriptions.db")
+        conn = sqlite3.connect(str(SWARM_CONFIG["database_path"]))
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM users")
         count = cursor.fetchone()[0]
         conn.close()
         return {"count": count}
-    except:
+    except Exception:
         return {"count": 0}
+
 
 @app.get("/admin/api/delegations/count")
 async def delegation_count(username: str = Depends(verify_admin)):
     """Get total delegation count"""
-    # TODO: Track delegations in database
-    return {"count": 0}
+    try:
+        conn = sqlite3.connect(str(SWARM_CONFIG["database_path"]))
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM delegations")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return {"count": count}
+    except Exception:
+        return {"count": 0}
+
 
 @app.get("/admin/users")
 async def list_users(username: str = Depends(verify_admin)):
     """List all users"""
     try:
-        conn = sqlite3.connect("/home/yenn/.yennefer/subscriptions.db")
+        conn = sqlite3.connect(str(SWARM_CONFIG["database_path"]))
         cursor = conn.cursor()
         cursor.execute("SELECT email, tier, created_at FROM users ORDER BY created_at DESC LIMIT 100")
         users = cursor.fetchall()
@@ -175,11 +184,12 @@ async def list_users(username: str = Depends(verify_admin)):
     except Exception as e:
         return HTMLResponse(f"<p>Error loading users: {str(e)}</p>")
 
+
 @app.get("/admin/subscriptions")
 async def list_subscriptions(username: str = Depends(verify_admin)):
     """List all active subscriptions"""
     try:
-        conn = sqlite3.connect("/home/yenn/.yennefer/subscriptions.db")
+        conn = sqlite3.connect(str(SWARM_CONFIG["database_path"]))
         cursor = conn.cursor()
         cursor.execute("""
             SELECT u.email, s.tier, s.status, s.current_period_end
@@ -191,10 +201,7 @@ async def list_subscriptions(username: str = Depends(verify_admin)):
         subs = cursor.fetchall()
         conn.close()
 
-        sub_html = "<br>".join([
-            f"{email} - {tier} ({status}) - expires {end}"
-            for email, tier, status, end in subs
-        ])
+        sub_html = "<br>".join([f"{email} - {tier} ({status}) - expires {end}" for email, tier, status, end in subs])
 
         return HTMLResponse(f"""
         <!DOCTYPE html>
@@ -214,6 +221,7 @@ async def list_subscriptions(username: str = Depends(verify_admin)):
         """)
     except Exception as e:
         return HTMLResponse(f"<p>Error loading subscriptions: {str(e)}</p>")
+
 
 @app.get("/admin/config")
 async def config_panel(username: str = Depends(verify_admin)):
@@ -248,10 +256,12 @@ async def config_panel(username: str = Depends(verify_admin)):
     </html>
     """)
 
+
 if __name__ == "__main__":
     import uvicorn
+
     print("🔐 Admin Panel Starting...")
-    print(f"   URL: http://localhost:8400")
+    print("   URL: http://localhost:8400")
     print(f"   Username: {ADMIN_USERNAME}")
     print(f"   Password: {ADMIN_PASSWORD}")
     print("")
