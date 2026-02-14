@@ -1,7 +1,6 @@
 // scripts/genesis.cjs
 // Yennefer Tri-Mind Orchestration - The Genesis Cycle
 // Coordinates: Claude (Visionary), Codex (Scribe), Jules (Builder)
-require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
