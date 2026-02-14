@@ -145,8 +145,6 @@ function generateWorldComponent(directive) {
   }
 
   const isDreiMaterial = DREI_MATERIALS.includes(mat.name);
-  // For standard materials (e.g., MeshStandardMaterial), the JSX tag is lowercase (meshStandardMaterial)
-  // For Drei materials, it's uppercase (MeshDistortMaterial)
   const materialTag = isDreiMaterial ? mat.name : mat.name.charAt(0).toLowerCase() + mat.name.slice(1);
 
   // Correctly format geometry tag (camelCase, e.g. TorusKnotGeometry -> torusKnotGeometry)
