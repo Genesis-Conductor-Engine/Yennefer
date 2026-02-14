@@ -15,8 +15,8 @@ module.exports = {
         NODE_ENV: 'production',
         GENIE_MODE: 'true'
       },
-      error_file: '/home/yenn/.yennefer/logs/genie-error.log',
-      out_file: '/home/yenn/.yennefer/logs/genie-out.log',
+      error_file: './logs/genie-error.log',
+      out_file: './logs/genie-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     }
   ]

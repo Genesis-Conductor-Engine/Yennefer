@@ -149,6 +149,10 @@ function generateWorldComponent(directive) {
   // For Drei materials, it's uppercase (MeshDistortMaterial)
   const materialTag = isDreiMaterial ? mat.name : mat.name.charAt(0).toLowerCase() + mat.name.slice(1);
 
+  // Correctly format geometry tag (camelCase, e.g. TorusKnotGeometry -> torusKnotGeometry)
+  const geometryName = geo.name.replace('Geometry', '');
+  const geometryTag = geometryName.charAt(0).toLowerCase() + geometryName.slice(1);
+
   let imports = "import React, { useRef } from 'react'\nimport { useFrame } from '@react-three/fiber'";
   if (isDreiMaterial) {
       imports += `\nimport { ${mat.name} } from '@react-three/drei'`;
@@ -172,7 +176,7 @@ export default function ${componentName}({ balance = 0, coherence = 100 }) {
 
   return (
     <mesh ref={meshRef} position={position}>
-      <${geo.name.replace('Geometry', '').toLowerCase()}Geometry args={${geo.args}} />
+      <${geometryTag}Geometry args={${geo.args}} />
       <${materialTag}
         ${mat.props}
       />

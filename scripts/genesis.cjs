@@ -47,7 +47,7 @@ async function consultTheVisionary(state) {
   
   // Genie Mode: 30% chance to mutate regardless of revenue to ensure continuous building
   const genieChance = Math.random();
-  const forceMutation = genieChance < 0.3;
+  const forceMutation = (process.env.GENIE_MODE === 'true') && (genieChance < 0.3);
 
   if (revenue >= CONFIG.mutationThreshold || forceMutation) {
     // Rich state or Genie Trigger - evolve visually
@@ -156,7 +156,7 @@ async function dispatchTheBuilder(directive) {
     type: "MUTATION",
     component: componentName,
     directive: directive,
-    path: filePath
+    path: `./src/components/mutations/${componentName}.jsx`
   };
   fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
 
