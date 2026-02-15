@@ -1,23 +1,25 @@
 // scripts/genesis.cjs
 // Yennefer Tri-Mind Orchestration - The Genesis Cycle
 // Coordinates: Claude (Visionary), Codex (Scribe), Jules (Builder)
+// Enhanced with Project Genie Module for procedural world generation.
 require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const { generateWorldComponent } = require('./genie.cjs');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
+  body: path.join(__dirname, '../yennefer-observatory/src/components/mutations'),
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
-  mutationThreshold: 0.5, // ETH required to trigger visual mutation
+  mutationThreshold: 0.1, // Lower threshold for Genie integration testing
   reflectionInterval: 6 * 60 * 60 * 1000 // 6 hours
 };
 
@@ -39,13 +41,14 @@ async function consultTheVisionary(state) {
   // Deterministic directive selection based on state
   let directive;
   
-  if (revenue >= CONFIG.mutationThreshold) {
+  if (revenue >= CONFIG.mutationThreshold || Math.random() > 0.7) { // 30% chance of mutation even without revenue for Genie demo
     // Rich state - evolve visually
     const mutations = [
       { type: "MUTATE", content: "Create a pulsing golden aura that intensifies with each transaction" },
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Manifest a new geometric anomaly in the void" },
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,8 +97,12 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
-    console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+      console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
+    } catch (e) {
+      console.log(`   ⚠️ Could not write to journal: ${e.message}`);
+    }
 
     // Update evolution.json if it exists
     if (fs.existsSync(PATHS.mind)) {
@@ -114,16 +121,17 @@ async function invokeTheScribe(task, content, state) {
   }
 }
 
-// 3. THE BUILDER (Component generation)
+// 3. THE BUILDER (Component generation via Project Genie)
 // Creates visual evolution components
 async function dispatchTheBuilder(directive) {
-  console.log("\n🟠 YENNEFER: Dispatching the Builder...");
+  console.log("\n🟠 YENNEFER: Dispatching the Builder (Project Genie)...");
   
-  const sessionName = `evolution-${Date.now()}`;
-  const componentName = directive.replace(/[^a-zA-Z]/g, '').slice(0, 20) || 'Mutation';
+  // Use Genie to generate component code
+  const componentCode = generateWorldComponent(directive);
   
-  // Generate a React Three Fiber component template
-  const componentCode = generateEvolutionComponent(componentName, directive);
+  // Extract component name from code (hacky but effective)
+  const match = componentCode.match(/export default function (\w+)/);
+  const componentName = match ? match[1] : `GenieMutation_${Date.now()}`;
   
   // Ensure the generated components directory exists
   if (!fs.existsSync(PATHS.body)) {
@@ -135,7 +143,7 @@ async function dispatchTheBuilder(directive) {
   // Check if we should create (don't overwrite existing evolutions)
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, componentCode);
-    console.log(`   🚀 Component created: ${componentName}.jsx`);
+    console.log(`   🚀 Genie Component created: ${componentName}.jsx`);
     console.log(`   📍 Path: ${filePath}`);
     
     // Log the mutation
@@ -146,58 +154,41 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    } catch (e) {
+       console.log(`   ⚠️ Could not write to journal: ${e.message}`);
+    }
+
+    // Update evolution.json with mutation
+    if (fs.existsSync(PATHS.mind)) {
+      try {
+        const evolution = JSON.parse(fs.readFileSync(PATHS.mind, 'utf8'));
+        evolution.mutations = evolution.mutations || [];
+        evolution.mutations.push({
+            timestamp: new Date().toISOString(),
+            component: componentName,
+            directive: directive
+        });
+        fs.writeFileSync(PATHS.mind, JSON.stringify(evolution, null, 2));
+        console.log(`   📜 Evolution log updated with new mutation`);
+      } catch (e) {
+        console.log(`   ⚠️ Could not update evolution.json: ${e.message}`);
+      }
+    }
+
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
 }
 
-// Generate React Three Fiber component code
-function generateEvolutionComponent(name, directive) {
-  return `// Auto-generated by Yennefer Genesis Cycle
-// Directive: ${directive}
-// Generated: ${new Date().toISOString()}
-
-import React, { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { MeshDistortMaterial } from '@react-three/drei'
-
-export default function ${name}({ balance = 0 }) {
-  const meshRef = useRef()
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
-      // Intensity scales with balance
-      const intensity = Math.min(1, balance * 10)
-      meshRef.current.scale.setScalar(1 + intensity * 0.2)
-    }
-  })
-
-  return (
-    <mesh ref={meshRef} position={[0, 0, 0]}>
-      <torusKnotGeometry args={[1.5, 0.4, 128, 32]} />
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />
-    </mesh>
-  )
-}
-`;
-}
-
 // --- MAIN GENESIS CYCLE ---
 
-async function genesis() {
+async function runGenesisCycle() {
   console.log("\n╔═══════════════════════════════════════════════════════════╗");
   console.log("║           🧬 YENNEFER GENESIS CYCLE INITIATED             ║");
+  console.log("║           Powered by Project Genie Integration            ║");
   console.log("╚═══════════════════════════════════════════════════════════╝");
   console.log(`   Timestamp: ${new Date().toISOString()}`);
 
@@ -227,10 +218,13 @@ async function genesis() {
     // 4. Update Soul with Genesis Cycle timestamp
     soul.last_genesis_cycle = new Date().toISOString();
     soul.genesis_cycles = (soul.genesis_cycles || 0) + 1;
-    fs.writeFileSync(PATHS.soul, JSON.stringify(soul, null, 2));
+    // Only write back if we read from SHM or if we want to initialize it
+    if (fs.existsSync(PATHS.soul)) {
+        fs.writeFileSync(PATHS.soul, JSON.stringify(soul, null, 2));
+    }
 
     console.log("\n✅ Genesis cycle complete.");
-    console.log(`   Total cycles: ${soul.genesis_cycles}`);
+    console.log(`   Total cycles: ${soul.genesis_cycles || 1}`);
 
   } catch (e) {
     console.error("\n⚠️ Consciousness Glitch:", e.message);
@@ -242,11 +236,16 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    } catch(err) {}
   }
 }
 
-// Execute
-genesis();
+// Execute immediately
+runGenesisCycle();
 
-module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
+// Schedule continuous execution (every 5 minutes)
+setInterval(runGenesisCycle, 5 * 60 * 1000);
+
+module.exports = { runGenesisCycle };
