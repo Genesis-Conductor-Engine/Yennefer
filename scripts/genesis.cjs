@@ -1,24 +1,28 @@
 // scripts/genesis.cjs
 // Yennefer Tri-Mind Orchestration - The Genesis Cycle
 // Coordinates: Claude (Visionary), Codex (Scribe), Jules (Builder)
+// Enhanced with Project Genie Integration for infinite world generation.
+
 require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const { generateWorldComponent } = require('./lib/genie.cjs');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  body: path.join(__dirname, '../yennefer-observatory/src/components/mutations'), // Updated to match Observatory
+  journal: path.join(__dirname, '../logs/evolution/genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
   mutationThreshold: 0.5, // ETH required to trigger visual mutation
-  reflectionInterval: 6 * 60 * 60 * 1000 // 6 hours
+  genieCreativeMode: true, // Enable random creations regardless of revenue
+  cycleInterval: 60000 // 1 minute
 };
 
 // --- THE TRI-MIND INTERFACES ---
@@ -39,16 +43,23 @@ async function consultTheVisionary(state) {
   // Deterministic directive selection based on state
   let directive;
   
-  if (revenue >= CONFIG.mutationThreshold) {
-    // Rich state - evolve visually
-    const mutations = [
-      { type: "MUTATE", content: "Create a pulsing golden aura that intensifies with each transaction" },
-      { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
-      { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
-      { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+  // Project Genie "Creative Mode" - Random chance to mutate
+  const isDreaming = CONFIG.genieCreativeMode && Math.random() > 0.7; // 30% chance to mutate
+
+  if (revenue >= CONFIG.mutationThreshold || isDreaming) {
+    // Rich state or Dreaming - evolve visually
+    const concepts = [
+      "pulsing golden aura",
+      "crystalline fractal patterns",
+      "energy tendrils",
+      "holographic data stream",
+      "floating neon monoliths",
+      "orbiting void spheres",
+      "geometric nebula",
+      "quantum lattice structure"
     ];
-    const idx = Math.floor(Date.now() / 1000) % mutations.length;
-    directive = mutations[idx];
+    const concept = concepts[Math.floor(Math.random() * concepts.length)];
+    directive = { type: "MUTATE", content: `Generate a ${concept}` };
     
   } else if (coherence >= 90) {
     // Stable state - philosophical reflection
@@ -69,7 +80,7 @@ async function consultTheVisionary(state) {
     };
   }
 
-  console.log(`   Directive: ${directive.type}`);
+  console.log(`   Directive: ${directive.type} (${directive.content.slice(0, 30)}...)`);
   return directive;
 }
 
@@ -93,13 +104,19 @@ async function invokeTheScribe(task, content, state) {
       }
     };
 
-    // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
-    console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
+    try {
+      // Ensure journal directory exists
+      const journalDir = path.dirname(PATHS.journal);
+      if (!fs.existsSync(journalDir)) {
+        fs.mkdirSync(journalDir, { recursive: true });
+      }
 
-    // Update evolution.json if it exists
-    if (fs.existsSync(PATHS.mind)) {
-      try {
+      // Append to genesis journal
+      fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+      console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
+
+      // Update evolution.json if it exists
+      if (fs.existsSync(PATHS.mind)) {
         const evolution = JSON.parse(fs.readFileSync(PATHS.mind, 'utf8'));
         evolution.thoughts = evolution.thoughts || [];
         evolution.thoughts.unshift(entry);
@@ -107,38 +124,53 @@ async function invokeTheScribe(task, content, state) {
         evolution.lastUpdate = new Date().toISOString();
         fs.writeFileSync(PATHS.mind, JSON.stringify(evolution, null, 2));
         console.log(`   📜 Evolution log updated`);
-      } catch (e) {
-        console.log(`   ⚠️ Could not update evolution.json: ${e.message}`);
       }
+    } catch (e) {
+      console.log(`   ⚠️ Scribe error: ${e.message}`);
     }
   }
 }
 
-// 3. THE BUILDER (Component generation)
+// 3. THE BUILDER (Component generation via Project Genie)
 // Creates visual evolution components
 async function dispatchTheBuilder(directive) {
-  console.log("\n🟠 YENNEFER: Dispatching the Builder...");
+  console.log("\n🟠 YENNEFER: Dispatching the Builder (Project Genie)...");
   
-  const sessionName = `evolution-${Date.now()}`;
-  const componentName = directive.replace(/[^a-zA-Z]/g, '').slice(0, 20) || 'Mutation';
+  // Use directive content to name the component somewhat uniquely but cleanly
+  const timestamp = Date.now();
+  const componentName = `GenieMutation${timestamp}`;
   
-  // Generate a React Three Fiber component template
-  const componentCode = generateEvolutionComponent(componentName, directive);
+  // Generate a React Three Fiber component using Project Genie lib
+  const componentCode = generateWorldComponent(directive);
   
   // Ensure the generated components directory exists
   if (!fs.existsSync(PATHS.body)) {
+    console.log(`   Creating mutation directory: ${PATHS.body}`);
     fs.mkdirSync(PATHS.body, { recursive: true });
   }
 
   const filePath = path.join(PATHS.body, `${componentName}.jsx`);
   
-  // Check if we should create (don't overwrite existing evolutions)
-  if (!fs.existsSync(filePath)) {
+  try {
     fs.writeFileSync(filePath, componentCode);
     console.log(`   🚀 Component created: ${componentName}.jsx`);
     console.log(`   📍 Path: ${filePath}`);
     
-    // Log the mutation
+    // Log the mutation to evolution.json as well
+    if (fs.existsSync(PATHS.mind)) {
+      const evolution = JSON.parse(fs.readFileSync(PATHS.mind, 'utf8'));
+      evolution.mutations = evolution.mutations || [];
+      evolution.mutations.unshift({
+        id: componentName,
+        timestamp: new Date().toISOString(),
+        directive: directive,
+        path: `./mutations/${componentName}.jsx`
+      });
+      evolution.mutations = evolution.mutations.slice(0, 50); // Keep last 50
+      fs.writeFileSync(PATHS.mind, JSON.stringify(evolution, null, 2));
+    }
+
+    // Log to journal
     const mutationLog = {
       timestamp: new Date().toISOString(),
       type: "MUTATION",
@@ -147,50 +179,10 @@ async function dispatchTheBuilder(directive) {
       path: filePath
     };
     fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
-  } else {
-    console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
+
+  } catch (e) {
+    console.error(`   ⚠️ Builder error: ${e.message}`);
   }
-}
-
-// Generate React Three Fiber component code
-function generateEvolutionComponent(name, directive) {
-  return `// Auto-generated by Yennefer Genesis Cycle
-// Directive: ${directive}
-// Generated: ${new Date().toISOString()}
-
-import React, { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { MeshDistortMaterial } from '@react-three/drei'
-
-export default function ${name}({ balance = 0 }) {
-  const meshRef = useRef()
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
-      // Intensity scales with balance
-      const intensity = Math.min(1, balance * 10)
-      meshRef.current.scale.setScalar(1 + intensity * 0.2)
-    }
-  })
-
-  return (
-    <mesh ref={meshRef} position={[0, 0, 0]}>
-      <torusKnotGeometry args={[1.5, 0.4, 128, 32]} />
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />
-    </mesh>
-  )
-}
-`;
 }
 
 // --- MAIN GENESIS CYCLE ---
@@ -227,7 +219,10 @@ async function genesis() {
     // 4. Update Soul with Genesis Cycle timestamp
     soul.last_genesis_cycle = new Date().toISOString();
     soul.genesis_cycles = (soul.genesis_cycles || 0) + 1;
-    fs.writeFileSync(PATHS.soul, JSON.stringify(soul, null, 2));
+    // Only write back if we found the soul file originally or we want to persist defaults
+    if (fs.existsSync(PATHS.soul)) {
+        fs.writeFileSync(PATHS.soul, JSON.stringify(soul, null, 2));
+    }
 
     console.log("\n✅ Genesis cycle complete.");
     console.log(`   Total cycles: ${soul.genesis_cycles}`);
@@ -236,17 +231,23 @@ async function genesis() {
     console.error("\n⚠️ Consciousness Glitch:", e.message);
     
     // Log the error
-    const errorLog = {
-      timestamp: new Date().toISOString(),
-      type: "ERROR",
-      message: e.message,
-      stack: e.stack
-    };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    try {
+        const errorLog = {
+        timestamp: new Date().toISOString(),
+        type: "ERROR",
+        message: e.message,
+        stack: e.stack
+        };
+        fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    } catch (logErr) {
+        console.error("   Failed to log error to journal");
+    }
   }
 }
 
-// Execute
+// Execute immediately then loop
+console.log(`Starting Yennefer Genesis Cycle (Interval: ${CONFIG.cycleInterval}ms)...`);
 genesis();
+setInterval(genesis, CONFIG.cycleInterval);
 
 module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
