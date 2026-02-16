@@ -1,5 +1,5 @@
 name = "yennefer"
-main = "workers/index.js"
+main = "worker.mjs"
 compatibility_date = "2024-04-01"
 
 # [placement] removed for CI stability
