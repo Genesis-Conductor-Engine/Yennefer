@@ -1,6 +1,5 @@
 name = "yennefer"
-main = "workers/index.js"
-compatibility_date = "2024-01-01"
+main = "worker.js"
+compatibility_date = "2024-04-01"
 
-[placement]
-mode = "smart"
+# [placement] removed for CI stability
