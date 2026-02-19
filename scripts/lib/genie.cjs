@@ -15,7 +15,7 @@ const generateEvolutionComponent = (directive, name) => {
   // Select geometry based on type
   let geometryJsx = '<torusKnotGeometry args={[1, 0.3, 128, 32]} />';
 
-  if (isIce || isCrystal) geometryJsx = '<octahedronGeometry args={[1.5, 0]} />';
+  if (isIce) geometryJsx = '<octahedronGeometry args={[1.5, 0]} />';
   else if (isVoid) geometryJsx = '<sphereGeometry args={[1.2, 32, 32]} />';
   else if (isGold) geometryJsx = '<boxGeometry args={[1.2, 1.2, 1.2]} />';
   else if (isNature) geometryJsx = '<icosahedronGeometry args={[1.4, 1]} />';

@@ -94,6 +94,12 @@ async function invokeTheScribe(task, content, state) {
       }
     };
 
+    // Ensure logs directory exists
+    const journalDir = path.dirname(PATHS.journal);
+    if (!fs.existsSync(journalDir)) {
+      fs.mkdirSync(journalDir, { recursive: true });
+    }
+
     // Append to genesis journal
     fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
@@ -149,6 +155,13 @@ async function dispatchTheBuilder(directive) {
     directive: directive,
     path: filePath
   };
+
+    // Ensure logs directory exists
+    const journalDir = path.dirname(PATHS.journal);
+    if (!fs.existsSync(journalDir)) {
+      fs.mkdirSync(journalDir, { recursive: true });
+    }
+
   fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
 }
 
@@ -201,6 +214,13 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
+
+    // Ensure logs directory exists
+    const journalDir = path.dirname(PATHS.journal);
+    if (!fs.existsSync(journalDir)) {
+      fs.mkdirSync(journalDir, { recursive: true });
+    }
+
     fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
   }
 }
