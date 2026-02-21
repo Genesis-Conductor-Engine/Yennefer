@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "build": "echo 'No build step required'",
     "test": "hardhat test"
   },
   "devDependencies": {
