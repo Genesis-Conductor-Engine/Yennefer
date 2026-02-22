@@ -13,7 +13,8 @@ module.exports = {
       restart_delay: 5000,
       env: {
         NODE_ENV: 'production',
-        FORCE_MUTATION: 'false'
+        FORCE_MUTATION: 'false',
+        GENESIS_LOOP: 'true'
       }
     }
   ]

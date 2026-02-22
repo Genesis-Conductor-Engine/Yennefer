@@ -1,0 +1,36 @@
+# Core exclusions
+node_modules
+.git
+.github
+.copilot
+.devcontainer
+.genesis
+.openai
+.yennefer
+logs
+docker
+docs
+public
+
+# Repositories & Submodules
+genesis-q-mem
+yennefer-observatory
+yennefer-core
+contracts
+
+# Build artifacts & temp files
+dist
+build
+.env*
+*.log
+*.jsonl
+
+# Scripts & Configs not for Worker
+scripts
+ecosystem.*.config.cjs
+docker-compose*.yml
+Dockerfile*
+package.json
+package-lock.json
+hardhat.config.cjs
+wrangler.toml

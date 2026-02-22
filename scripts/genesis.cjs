@@ -217,11 +217,16 @@ async function genesis() {
 }
 
 async function runContinuousGenesis() {
-  console.log("Starting Continuous Genesis Cycle...");
-  while (true) {
+  if (process.env.GENESIS_LOOP === 'true') {
+    console.log("Starting Continuous Genesis Cycle (Loop Mode)...");
+    while (true) {
+      await genesis();
+      console.log("Sleeping for 60 seconds...");
+      await new Promise(resolve => setTimeout(resolve, 60000));
+    }
+  } else {
+    console.log("Executing Single Genesis Cycle...");
     await genesis();
-    console.log("Sleeping for 60 seconds...");
-    await new Promise(resolve => setTimeout(resolve, 60000));
   }
 }
 
