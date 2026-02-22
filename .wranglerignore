@@ -30,7 +30,4 @@ scripts
 ecosystem.*.config.cjs
 docker-compose*.yml
 Dockerfile*
-package.json
-package-lock.json
 hardhat.config.cjs
-wrangler.toml
