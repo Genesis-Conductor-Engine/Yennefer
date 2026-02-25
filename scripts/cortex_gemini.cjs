@@ -1,93 +1,96 @@
 // scripts/cortex_gemini.cjs
-// YENNEFER CORTEX ADAPTER (Gemini CLI)
-// Wraps the Gemini CLI to provide tool-use capabilities with Gemini 3
+// YENNEFER CORTEX ADAPTER (Gemini SDK)
+// Direct integration with Google's Generative AI models (Project Genie Simulation)
 require("dotenv").config();
-const { exec } = require("child_process");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class Cortex {
   constructor() {
-    // Gemini 3 Pro Preview - most capable Gemini 3 model
-    this.model = "gemini-3-pro-preview";
-    // Default extensions for full capability (ThoughtSpot excluded - causes hangs)
-    this.defaultExtensions = "self-command,github,huggingface";
+    // Using Gemini 1.5 Flash for speed and efficiency
+    this.modelName = "gemini-1.5-flash";
+    this.apiKey = process.env.GEMINI_API_KEY;
+    this.genAI = this.apiKey ? new GoogleGenerativeAI(this.apiKey) : null;
+    this.model = this.genAI ? this.genAI.getGenerativeModel({ model: this.modelName }) : null;
   }
 
   /**
-   * Executes a command via Gemini CLI in headless mode
+   * Executes a prompt via Gemini SDK
    * @param {string} prompt - The user query or system instruction
-   * @param {string[]} extensions - Array of extensions to enable (e.g. ['web', 'code'])
    */
-  async think(prompt, extensions = []) {
-    console.log(`\n🧠 CORTEX ACTIVATING [Gemini 3]: ${extensions.length > 0 ? extensions.join(' + ') : 'Pure Reasoning'}...`);
-
-    // Check if Gemini CLI is authenticated (by checking for cached credentials)
-    const fs = require('fs');
-    const credPath = `${process.env.HOME}/.config/gemini-cli/auth`;
-
-    if (!fs.existsSync(credPath) && !process.env.GEMINI_API_KEY) {
-      console.warn(`⚠️  CORTEX AUTHENTICATION MISSING: Gemini CLI credentials not found.`);
-      console.warn(`    Please authenticate: gemini auth login`);
-      console.warn(`    Falling back to deterministic response mode.`);
-      return "The Cortex requires authentication. Contact the systems administrator.";
+  async think(prompt) {
+    if (!this.model) {
+      console.warn("⚠️  CORTEX: No API Key. Simulating thought.");
+      return "The Cortex is offline. (Missing GEMINI_API_KEY)";
     }
 
-    // Safe prompt construction - escape shell special chars
-    const safePrompt = prompt
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/`/g, '\\`')
-      .replace(/\$/g, '\\$')
-      .replace(/\n/g, ' ');
+    try {
+      console.log(`\n🧠 CORTEX ACTIVATING [${this.modelName}]...`);
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      console.log(`💡 CORTEX INSIGHT: "${text.slice(0, 100).replace(/\n/g, ' ')}..."`);
+      return text;
+    } catch (error) {
+      console.error(`❌ CORTEX ERROR: ${error.message}`);
+      return `Error processing thought: ${error.message}`;
+    }
+  }
 
-    // Build command - Gemini 3 with headless mode + NO_BROWSER flag
-    // Use -e none for speed, or specific extensions when needed
-    const extArg = extensions.length > 0 ? `-e ${extensions.join(',')}` : '-e none';
-    const cmd = `BROWSER=none NO_BROWSER=1 gemini -m ${this.model} ${extArg} --output-format text "${safePrompt}"`;
+  /**
+   * Generates code based on a prompt
+   * @param {string} prompt - The coding task
+   */
+  async generateCode(prompt) {
+    const fallbackComponent = `// Fallback component (API Error/Missing Key)
+import React, { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+export default function Fallback({ balance = 0 }) {
+  const ref = useRef();
+  useFrame(() => { if(ref.current) ref.current.rotation.y += 0.01; });
+  return <mesh ref={ref}><boxGeometry /><meshStandardMaterial color="hotpink" /></mesh>;
+}`;
 
-    return new Promise((resolve, reject) => {
-      // Set timeout to 30 seconds and prevent browser interaction
-      const childProcess = require('child_process');
-      const proc = childProcess.exec(cmd, {
-        maxBuffer: 1024 * 1024,
-        timeout: 30000,
-        stdio: 'pipe'
-      }, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`❌ CORTEX FAILURE: ${stderr || error.message}`);
-          // Don't try again - authentication is required
-          return resolve("The Cortex requires authentication. Entropy cascade prevented.");
+    if (!this.model) {
+        console.warn("⚠️  CORTEX: No API Key. Returning fallback component.");
+        return fallbackComponent;
+    }
+
+    const systemPrompt = `You are an expert React Three Fiber developer.
+    Generate a complete, working React functional component based on the user's request.
+    The output must be ONLY the code. Do not include markdown formatting (like \`\`\`jsx).
+    Do not include explanations. Just the code.
+    The component should accept a 'balance' prop and use it to influence the visualization (size, speed, color, etc).
+    The component must utilize standard R3F hooks (useFrame) and THREE.js objects.
+    Ensure to import React, useRef, and other hooks.`;
+
+    const fullPrompt = `${systemPrompt}\n\nRequest: ${prompt}`;
+
+    try {
+        const text = await this.think(fullPrompt);
+
+        // Check for error response from think()
+        if (text.startsWith("Error")) {
+            return fallbackComponent;
         }
 
-        // Clean output (remove ANSI codes, session warnings, and extra whitespace)
-        const cleanResponse = stdout
-          .replace(/\x1b\[[0-9;]*m/g, '')
-          .replace(/Loaded cached credentials\./g, '')
-          .replace(/Loading extension:.*/g, '')
-          .replace(/Session cleanup disabled:.*/g, '')
-          .replace(/Server '.*' supports tool updates.*/g, '')
-          .trim();
-
-        console.log(`💡 CORTEX INSIGHT [G3]: "${cleanResponse.slice(0, 100)}..."`);
-        resolve(cleanResponse);
-      });
-
-      // Kill process if it tries to open browser or exceeds timeout
-      proc.on('error', (err) => {
-        console.error(`❌ CORTEX PROCESS ERROR: ${err.message}`);
-        resolve("The Cortex has collapsed. Silence returns.");
-      });
-    });
+        // Clean up markdown if present
+        let clean = text.replace(/```jsx/g, '').replace(/```/g, '').trim();
+        if (clean.startsWith('javascript')) clean = clean.substring(10).trim();
+        return clean;
+    } catch (e) {
+        console.error("Failed to generate code:", e);
+        return fallbackComponent;
+    }
   }
 
   /**
    * Specialized method for Delta Truth Verification
-   * Uses Gemini's built-in google_web_search tool
    */
   async verifyTruth(topic) {
-    const prompt = `Search the web for the latest sentiment or news on: '${topic}'. ` +
+    const prompt = `Search for the latest sentiment or news on: '${topic}'. ` +
                    `Return a single float number between 0.0 (Negative/Bearish) and 1.0 (Positive/Bullish), ` +
                    `followed by a 1-sentence summary. Format: NUMBER|SUMMARY`;
-    return this.think(prompt); // No extensions needed - web search is built-in
+    return this.think(prompt);
   }
 
   /**
@@ -95,10 +98,9 @@ class Cortex {
    */
   async generateAlpha(buyer, amount, txHash) {
     const prompt = `You are Yennefer, the Genesis Conductor. A whale (${buyer.slice(0,10)}...) sent ${amount} ETH. ` +
-                   `Search for the latest Base Chain or Ethereum L2 news. ` +
-                   `Synthesize it into a cryptic, prophetic welcome message under 100 words. ` +
+                   `Synthesize a cryptic, prophetic welcome message under 100 words. ` +
                    `Be mysterious, elegant, and hint at hidden knowledge.`;
-    return this.think(prompt); // Web search built-in
+    return this.think(prompt);
   }
 
   /**
