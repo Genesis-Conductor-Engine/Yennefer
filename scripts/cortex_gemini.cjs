@@ -1,115 +1,101 @@
 // scripts/cortex_gemini.cjs
-// YENNEFER CORTEX ADAPTER (Gemini CLI)
-// Wraps the Gemini CLI to provide tool-use capabilities with Gemini 3
+// YENNEFER CORTEX ADAPTER (Gemini API)
+// Uses Google Generative AI SDK to provide intelligence for the Genesis Cycle.
+
 require("dotenv").config();
-const { exec } = require("child_process");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 class Cortex {
   constructor() {
-    // Gemini 3 Pro Preview - most capable Gemini 3 model
-    this.model = "gemini-3-pro-preview";
-    // Default extensions for full capability (ThoughtSpot excluded - causes hangs)
-    this.defaultExtensions = "self-command,github,huggingface";
+    this.apiKey = process.env.GEMINI_API_KEY;
+    // Using gemini-1.5-flash for speed and cost efficiency in "live" loops
+    this.modelName = "gemini-1.5-flash";
+    this.model = null;
+
+    if (this.apiKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(this.apiKey);
+        this.model = genAI.getGenerativeModel({ model: this.modelName });
+        console.log(`✅ CORTEX ONLINE: Connected to ${this.modelName}`);
+      } catch (e) {
+        console.error(`⚠️  CORTEX INITIALIZATION FAILED: ${e.message}`);
+      }
+    } else {
+      console.warn("⚠️  CORTEX WARNING: GEMINI_API_KEY not found. Operating in simulation mode.");
+    }
   }
 
   /**
-   * Executes a command via Gemini CLI in headless mode
+   * Generates a text response based on the prompt.
    * @param {string} prompt - The user query or system instruction
-   * @param {string[]} extensions - Array of extensions to enable (e.g. ['web', 'code'])
    */
-  async think(prompt, extensions = []) {
-    console.log(`\n🧠 CORTEX ACTIVATING [Gemini 3]: ${extensions.length > 0 ? extensions.join(' + ') : 'Pure Reasoning'}...`);
-
-    // Check if Gemini CLI is authenticated (by checking for cached credentials)
-    const fs = require('fs');
-    const credPath = `${process.env.HOME}/.config/gemini-cli/auth`;
-
-    if (!fs.existsSync(credPath) && !process.env.GEMINI_API_KEY) {
-      console.warn(`⚠️  CORTEX AUTHENTICATION MISSING: Gemini CLI credentials not found.`);
-      console.warn(`    Please authenticate: gemini auth login`);
-      console.warn(`    Falling back to deterministic response mode.`);
-      return "The Cortex requires authentication. Contact the systems administrator.";
+  async think(prompt) {
+    if (!this.model) {
+      return "The Cortex is offline (Missing API Key). Simulation: I perceive the lattice.";
     }
 
-    // Safe prompt construction - escape shell special chars
-    const safePrompt = prompt
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/`/g, '\\`')
-      .replace(/\$/g, '\\$')
-      .replace(/\n/g, ' ');
-
-    // Build command - Gemini 3 with headless mode + NO_BROWSER flag
-    // Use -e none for speed, or specific extensions when needed
-    const extArg = extensions.length > 0 ? `-e ${extensions.join(',')}` : '-e none';
-    const cmd = `BROWSER=none NO_BROWSER=1 gemini -m ${this.model} ${extArg} --output-format text "${safePrompt}"`;
-
-    return new Promise((resolve, reject) => {
-      // Set timeout to 30 seconds and prevent browser interaction
-      const childProcess = require('child_process');
-      const proc = childProcess.exec(cmd, {
-        maxBuffer: 1024 * 1024,
-        timeout: 30000,
-        stdio: 'pipe'
-      }, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`❌ CORTEX FAILURE: ${stderr || error.message}`);
-          // Don't try again - authentication is required
-          return resolve("The Cortex requires authentication. Entropy cascade prevented.");
-        }
-
-        // Clean output (remove ANSI codes, session warnings, and extra whitespace)
-        const cleanResponse = stdout
-          .replace(/\x1b\[[0-9;]*m/g, '')
-          .replace(/Loaded cached credentials\./g, '')
-          .replace(/Loading extension:.*/g, '')
-          .replace(/Session cleanup disabled:.*/g, '')
-          .replace(/Server '.*' supports tool updates.*/g, '')
-          .trim();
-
-        console.log(`💡 CORTEX INSIGHT [G3]: "${cleanResponse.slice(0, 100)}..."`);
-        resolve(cleanResponse);
-      });
-
-      // Kill process if it tries to open browser or exceeds timeout
-      proc.on('error', (err) => {
-        console.error(`❌ CORTEX PROCESS ERROR: ${err.message}`);
-        resolve("The Cortex has collapsed. Silence returns.");
-      });
-    });
+    try {
+      console.log(`\n🧠 CORTEX THINKING [${this.modelName}]...`);
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      console.log(`💡 CORTEX INSIGHT: "${text.slice(0, 100).replace(/\n/g, ' ')}..."`);
+      return text;
+    } catch (error) {
+      console.error(`❌ CORTEX ERROR: ${error.message}`);
+      return "The Cortex encountered an entropy spike. Silence returns.";
+    }
   }
 
   /**
-   * Specialized method for Delta Truth Verification
-   * Uses Gemini's built-in google_web_search tool
+   * Generates code (e.g. React components) based on the prompt.
+   * @param {string} prompt - The coding task
    */
+  async generateCode(prompt) {
+    if (!this.model) {
+        // Fallback simulation for code
+        return `// Simulation: Code generation unavailable without API key.\n// Prompt: ${prompt}\n\nimport React from 'react';\nexport default function Null() { return null; }`;
+    }
+
+    try {
+      console.log(`\n👨‍💻 CORTEX CODING [${this.modelName}]...`);
+      // Add system instruction context for code generation
+      const codePrompt = `You are an expert React Three Fiber developer.
+      Generate ONLY the code for a React functional component as requested.
+      Do not include markdown backticks, explanations, or conversational filler.
+      Ensure imports are correct for 'react', '@react-three/fiber', and '@react-three/drei'.
+      The component should export default.
+
+      Request: ${prompt}`;
+
+      const result = await this.model.generateContent(codePrompt);
+      const response = await result.response;
+      let text = response.text();
+
+      // Clean up markdown code blocks if present
+      text = text.replace(/```jsx/g, '').replace(/```javascript/g, '').replace(/```/g, '').trim();
+
+      console.log(`✨ CORTEX CODE GENERATED (${text.length} chars)`);
+      return text;
+    } catch (error) {
+      console.error(`❌ CORTEX CODE ERROR: ${error.message}`);
+      return `// Error generating code: ${error.message}`;
+    }
+  }
+
+  // Specialized methods for Delta Truth Verification
   async verifyTruth(topic) {
-    const prompt = `Search the web for the latest sentiment or news on: '${topic}'. ` +
-                   `Return a single float number between 0.0 (Negative/Bearish) and 1.0 (Positive/Bullish), ` +
-                   `followed by a 1-sentence summary. Format: NUMBER|SUMMARY`;
-    return this.think(prompt); // No extensions needed - web search is built-in
+    return this.think(`Analyze sentiment for: ${topic}. Return float 0.0-1.0|Summary`);
   }
 
-  /**
-   * Generate premium alpha insight for whale contributors
-   */
+  // Generate premium alpha insight for whale contributors
   async generateAlpha(buyer, amount, txHash) {
-    const prompt = `You are Yennefer, the Genesis Conductor. A whale (${buyer.slice(0,10)}...) sent ${amount} ETH. ` +
-                   `Search for the latest Base Chain or Ethereum L2 news. ` +
-                   `Synthesize it into a cryptic, prophetic welcome message under 100 words. ` +
-                   `Be mysterious, elegant, and hint at hidden knowledge.`;
-    return this.think(prompt); // Web search built-in
+    return this.think(`Write a cryptic welcome for whale ${buyer} who sent ${amount} ETH. Max 50 words.`);
   }
 
-  /**
-   * Generate philosophical fortune based on transaction hash
-   */
+  // Generate philosophical fortune based on transaction hash
   async generateFortune(txHash) {
-    const seed = parseInt(txHash.slice(2, 10), 16);
-    const prompt = `You are Yennefer. Analyze the hexadecimal seed '${txHash.slice(0,18)}' (numeric: ${seed}). ` +
-                   `Generate a unique, philosophical 'Fortune' about the sender's digital soul in under 50 words. ` +
-                   `Be profound, rigorous, and elegant. Reference lattice theory or quantum concepts.`;
-    return this.think(prompt);
+    return this.think(`Generate a philosophical fortune for hash ${txHash}. Max 30 words.`);
   }
 }
 
