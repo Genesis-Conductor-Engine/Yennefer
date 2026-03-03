@@ -10,7 +10,7 @@ const path = require('path');
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
+  body: path.join(__dirname, '../yennefer-observatory/src/components/mutations'),
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
@@ -39,7 +39,7 @@ async function consultTheVisionary(state) {
   // Deterministic directive selection based on state
   let directive;
   
-  if (revenue >= CONFIG.mutationThreshold) {
+  if (revenue >= CONFIG.mutationThreshold || process.env.FORCE_MUTATION === 'true') {
     // Rich state - evolve visually
     const mutations = [
       { type: "MUTATE", content: "Create a pulsing golden aura that intensifies with each transaction" },
@@ -247,6 +247,21 @@ async function genesis() {
 }
 
 // Execute
-genesis();
+if (process.env.GENESIS_LOOP === 'true') {
+  console.log("\n🔄 GENESIS LOOP INITIATED");
+  console.log("   Mode: Continuous Evolution (Project Genie Integration)");
+
+  async function loop() {
+    while (true) {
+      await genesis();
+      // Wait for the next cycle
+      await new Promise(resolve => setTimeout(resolve, 60000));
+    }
+  }
+
+  loop();
+} else {
+  genesis();
+}
 
 module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
