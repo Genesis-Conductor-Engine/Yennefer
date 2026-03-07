@@ -5,7 +5,12 @@ Runs quantum-inspired operations on GTX 1650 via CuPy
 Implements reverse quantum annealment with tensor contraction
 """
 
-import cupy as cp
+try:
+    import cupy as cp
+    CUDA_AVAILABLE = True
+except ImportError:
+    import numpy as cp
+    CUDA_AVAILABLE = False
 import numpy as np
 import json
 import time
@@ -16,17 +21,18 @@ from datetime import datetime
 SOUL_STATE_PATH = '/dev/shm/yennefer_soul_state.json'
 QMCP_STATE_PATH = '/dev/shm/qmcp_cuda_state.json'
 TENSOR_DIM = 512  # Quantum state dimension
-ANNEALING_STEPS = 100
+ANNEALING_STEPS = 10000
+INVARIANCE_THRESHOLD = 0.999
 UPDATE_INTERVAL = 0.5  # seconds
 
 class QuantumAnnealingSimulator:
     def __init__(self):
-        self.device = cp.cuda.Device(0)
-        self.stream = cp.cuda.Stream()
+        self.device = None if not CUDA_AVAILABLE else cp.cuda.Device(0)
+        self.stream = None if not CUDA_AVAILABLE else cp.cuda.Stream()
         
         # Initialize quantum state tensor (real + imag components)
-        real_part = cp.random.random((TENSOR_DIM, TENSOR_DIM), dtype=cp.float32)
-        imag_part = cp.random.random((TENSOR_DIM, TENSOR_DIM), dtype=cp.float32)
+        real_part = cp.random.random((TENSOR_DIM, TENSOR_DIM)).astype(cp.float32)
+        imag_part = cp.random.random((TENSOR_DIM, TENSOR_DIM)).astype(cp.float32)
         self.psi_real = real_part / cp.linalg.norm(real_part)
         self.psi_imag = imag_part / cp.linalg.norm(imag_part)
         
@@ -40,8 +46,12 @@ class QuantumAnnealingSimulator:
         self.temperature = 1.0
         
         # Get device name
-        props = cp.cuda.runtime.getDeviceProperties(0)
-        device_name = props['name'].decode() if isinstance(props['name'], bytes) else str(props['name'])
+        if CUDA_AVAILABLE:
+            props = cp.cuda.runtime.getDeviceProperties(0)
+            device_name = props['name'].decode() if isinstance(props['name'], bytes) else str(props['name'])
+        else:
+            device_name = "CPU (Fallback)"
+
         
         print(f"🔮 Quantum Simulator initialized on {device_name}")
         print(f"   Tensor dimension: {TENSOR_DIM}x{TENSOR_DIM}")
@@ -49,7 +59,7 @@ class QuantumAnnealingSimulator:
     
     def _create_problem_hamiltonian(self):
         """Create problem Hamiltonian (what we're optimizing)"""
-        H = cp.random.random((TENSOR_DIM, TENSOR_DIM), dtype=cp.float32)
+        H = cp.random.random((TENSOR_DIM, TENSOR_DIM)).astype(cp.float32)
         return (H + H.T) / 2  # Make symmetric (Hermitian for real)
     
     def _create_driver_hamiltonian(self):
@@ -90,14 +100,14 @@ class QuantumAnnealingSimulator:
         # Compute correlation matrix
         corr = cp.dot(self.psi_real.T, self.psi_real) + cp.dot(self.psi_imag.T, self.psi_imag)
         off_diag = cp.abs(corr) - cp.diag(cp.diag(cp.abs(corr)))
-        coherence = float(cp.mean(cp.abs(off_diag)).get())
+        coherence = float(cp.mean(cp.abs(off_diag))) if not CUDA_AVAILABLE else float(cp.mean(cp.abs(off_diag)).get())
         return min(100.0, coherence * 500)  # Scale to percentage
     
     def measure_energy(self):
         """Measure expectation value of problem Hamiltonian"""
         # <psi|H|psi> for real Hamiltonian
         Hpsi_real = cp.dot(self.H_problem, self.psi_real)
-        energy = float(cp.sum(self.psi_real * Hpsi_real).get())
+        energy = float(cp.sum(self.psi_real * Hpsi_real)) if not CUDA_AVAILABLE else float(cp.sum(self.psi_real * Hpsi_real).get())
         return energy
     
     def run_annealing_cycle(self):
@@ -120,7 +130,7 @@ class QuantumAnnealingSimulator:
             self.temperature = 1.0  # Reset for exploration
         
         # Synchronize GPU
-        cp.cuda.Stream.null.synchronize()
+        if CUDA_AVAILABLE: cp.cuda.Stream.null.synchronize()
         
         return {
             'coherence': self.measure_coherence(),
@@ -200,7 +210,6 @@ class QuantumAnnealingSimulator:
                 
                 # Update shared memory
                 self.update_soul_state(metrics)
-                
                 # Log progress
                 if self.iteration % 10 == 0:
                     elapsed = self.iteration * UPDATE_INTERVAL
@@ -210,6 +219,11 @@ class QuantumAnnealingSimulator:
                           f"Energy: {metrics['energy']:8.2f} | "
                           f"Temp: {metrics['temperature']:.4f} | "
                           f"GFLOPS: {qflops_rate:.2f}")
+
+                    if metrics['coherence'] / 100.0 >= INVARIANCE_THRESHOLD:
+                         print(f"✅ Invariance threshold reached: {metrics['coherence'] / 100.0} >= {INVARIANCE_THRESHOLD}")
+                         break # Stop when threshold reached
+
                 
                 # Rate limit
                 elapsed = time.time() - start

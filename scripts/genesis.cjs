@@ -11,8 +11,13 @@ const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: fs.existsSync('/home/yenn/.yennefer') ? '/home/yenn/.yennefer/genesis_journal.jsonl' : path.join(__dirname, '../logs/genesis_journal.jsonl')
 };
+
+if (!fs.existsSync(path.dirname(PATHS.journal))) {
+    fs.mkdirSync(path.dirname(PATHS.journal), { recursive: true });
+}
+
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -35,6 +40,31 @@ async function consultTheVisionary(state) {
 
   console.log(`   State: Breath ${breath.toLocaleString()} | Coherence ${coherence}% | Revenue ${revenue} ETH`);
   console.log(`   Funding Progress: ${fundingProgress.toFixed(1)}%`);
+
+
+  // aShard & a2a Mesh Integration check
+  let mesh_active = false;
+  let active_sessions = 0;
+
+  try {
+    const HANDOFF_QUEUE = '/dev/shm/a2a_handoff_queue.json';
+    if (fs.existsSync(HANDOFF_QUEUE)) {
+      mesh_active = true;
+      const queue = JSON.parse(fs.readFileSync(HANDOFF_QUEUE, 'utf8'));
+      console.log(`   a2a Mesh Queue Depth: ${queue.length}`);
+    }
+
+    // Check journal for active Jules session
+    if (fs.existsSync(PATHS.journal)) {
+      const journal_tail = execSync('tail -n 50 ' + PATHS.journal).toString();
+      if (journal_tail.includes('jules_agent_active')) {
+        mesh_active = true;
+        console.log(`   a2a Mesh Status: Active Jules Session Detected`);
+      }
+    }
+  } catch (e) {
+    console.log(`   ⚠️ aShard Mesh Check Failed: ${e.message}`);
+  }
 
   // Deterministic directive selection based on state
   let directive;

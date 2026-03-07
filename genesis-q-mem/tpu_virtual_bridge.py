@@ -303,7 +303,7 @@ class TPUVirtualBridge:
         self.running = True
         
         try:
-            while self.running:
+            while self.running and self.bridge_cycles < 10000:
                 metrics = await self.bridge_cycle()
                 
                 if metrics and self.bridge_cycles % 5 == 0:
@@ -317,7 +317,7 @@ class TPUVirtualBridge:
                 await asyncio.sleep(0.5)
                 
         except KeyboardInterrupt:
-            print("\n🛑 Bridge shutting down...")
+            print("\n🛑 Bridge shutting down or iterations reached...")
         finally:
             self.running = False
 

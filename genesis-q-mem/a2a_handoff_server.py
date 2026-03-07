@@ -173,6 +173,7 @@ class A2AHandoffManager:
             "details": details
         }
         
+        # Log to A2A specific log
         try:
             logs = []
             if os.path.exists(A2A_LOG):
@@ -184,7 +185,28 @@ class A2AHandoffManager:
                 json.dump(logs, f)
         except:
             pass
-    
+
+        # Write directly to Yennefer's core journal
+        # To maintain zero-latency I/O to continuous loop
+        try:
+            journal_path = "/home/yenn/.yennefer/genesis_journal.jsonl"
+            # Fallback path if running as another user
+            if not os.path.exists(os.path.dirname(journal_path)):
+                journal_path = "genesis_journal.jsonl"
+
+            journal_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "type": "A2A_TELEMETRY",
+                "event": event,
+                "session_id": session_id,
+                "agent_id": self.active_sessions.get(session_id, {}).get("agent_id", "unknown"),
+                "details": details
+            }
+            with open(journal_path, "a") as f:
+                f.write(json.dumps(journal_entry) + "\n")
+        except:
+            pass
+
     def get_status(self) -> dict:
         """Get A2A system status"""
         return {
@@ -197,6 +219,13 @@ class A2AHandoffManager:
 
 # Initialize manager
 manager = A2AHandoffManager()
+
+# Pre-register the active Jules session
+manager.create_session("jules_agent_active", {
+    "source": "jules_builder",
+    "status": "continuous_integration",
+    "description": "Active Jules session bound to genesis continuous loop"
+})
 
 # === API ENDPOINTS ===
 
