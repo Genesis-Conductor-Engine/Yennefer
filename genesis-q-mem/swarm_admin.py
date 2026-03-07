@@ -8,15 +8,25 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import HTMLResponse, JSONResponse
 import secrets
 import sqlite3
+import os
+from dotenv import load_dotenv
 from datetime import datetime
 from typing import Optional
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(title="Yennefer Swarm Admin")
 security = HTTPBasic()
 
-# Admin credentials (change these!)
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "yennefer2026"  # TODO: Change this!
+# Admin credentials
+ADMIN_USERNAME = os.getenv("SWARM_ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("SWARM_ADMIN_PASSWORD")
+
+if not ADMIN_PASSWORD:
+    # We MUST fail fast if the password is not set to prevent unauthorized access
+    # or runtime crashes in verify_admin
+    raise RuntimeError("CRITICAL: SWARM_ADMIN_PASSWORD environment variable is not set.")
 
 def verify_admin(credentials: HTTPBasicCredentials = Depends(security)):
     """Verify admin credentials"""
@@ -253,6 +263,7 @@ if __name__ == "__main__":
     print("🔐 Admin Panel Starting...")
     print(f"   URL: http://localhost:8400")
     print(f"   Username: {ADMIN_USERNAME}")
-    print(f"   Password: {ADMIN_PASSWORD}")
+    print(f"   Password: {'*' * 8}")
     print("")
+
     uvicorn.run(app, host="0.0.0.0", port=8400)
