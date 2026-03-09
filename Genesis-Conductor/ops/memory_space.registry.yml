@@ -1,0 +1,7 @@
+agents:
+  - agent_id: AGENT_YENNEFER
+    memory_space: sanctuary-core
+    infrastructure_debt: 0
+  - agent_id: AGENT_CONDUCTOR
+    memory_space: treasury-orbit
+    infrastructure_debt: 0

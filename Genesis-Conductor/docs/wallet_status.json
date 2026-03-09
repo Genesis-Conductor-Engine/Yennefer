@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-02-25T02:15:15.132Z",
+  "summary": {
+    "networkCount": 3,
+    "totalWallets": 3,
+    "processedWallets": 0,
+    "totalUsdEstimate": 0,
+    "priceSymbols": []
+  },
+  "prices": {},
+  "networks": [
+    {
+      "name": "Ethereum",
+      "chainId": 1,
+      "nativeSymbol": "ETH",
+      "wallets": []
+    },
+    {
+      "name": "Polygon",
+      "chainId": 137,
+      "nativeSymbol": "MATIC",
+      "wallets": []
+    },
+    {
+      "name": "Arbitrum",
+      "chainId": 42161,
+      "nativeSymbol": "ETH",
+      "wallets": []
+    }
+  ],
+  "alerts": [
+    {
+      "severity": "critical",
+      "type": "portfolio_value_low",
+      "actual": "0",
+      "threshold": "1000"
+    }
+  ],
+  "warnings": [
+    "Skipped invalid wallet address for Treasury: 0xYOUR_TREASURY_ADDRESS",
+    "Skipped invalid wallet address for Deployer: 0xYOUR_DEPLOYER_ADDRESS",
+    "Skipped invalid wallet address for Seismic Reserve: 0xYOUR_RESERVE_ADDRESS",
+    "Skipped invalid wallet address for Treasury: 0xYOUR_TREASURY_ADDRESS",
+    "Skipped invalid wallet address for Deployer: 0xYOUR_DEPLOYER_ADDRESS",
+    "Skipped invalid wallet address for Seismic Reserve: 0xYOUR_RESERVE_ADDRESS",
+    "Skipped invalid wallet address for Treasury: 0xYOUR_TREASURY_ADDRESS",
+    "Skipped invalid wallet address for Deployer: 0xYOUR_DEPLOYER_ADDRESS",
+    "Skipped invalid wallet address for Seismic Reserve: 0xYOUR_RESERVE_ADDRESS"
+  ]
+}

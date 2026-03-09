@@ -1,0 +1,15 @@
+version: "3.5"
+default_tribute_percent: 10
+max_energy_steps: 1000
+monitor_interval_seconds: 30
+
+bot_networks:
+  moltbot: "https://moltbot.net/api/v1/tribute"
+  clawbot: "https://clawbot.ai/api/tribute"
+  wildcard: ""
+
+assets:
+  - symbol: ETH
+  - symbol: USDC
+  - symbol: MATIC
+  - symbol: ARB

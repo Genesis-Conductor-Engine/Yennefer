@@ -1,0 +1,14 @@
+{
+  "name": "genesis-conductor-wallet-status",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "wallet:status": "node scripts/wallet_status.mjs",
+    "tithing": "node scripts/tithing_protocol.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "js-yaml": "^4.1.0"
+  }
+}
