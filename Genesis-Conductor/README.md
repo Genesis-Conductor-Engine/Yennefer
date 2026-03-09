@@ -49,3 +49,22 @@ ARBITRUM_RPC_URL=... \
 WALLET_STATUS_PRICES_JSON='{"ETH":3500,"MATIC":1.0,"USDC":1.0,"USDT":1.0,"DAI":1.0,"WETH":3500,"WMATIC":1.0,"ARB":2.0}' \
 node scripts/wallet_status.mjs
 ```
+
+
+## Podman EVM PnL Indexer
+
+A lightweight local indexer is provided at `scripts/evm_pnl_indexer.py` with container runtime files in `indexer/`.
+
+> Stability Warning: exact PnL requires accurate baseline cost-basis values per wallet in `ops/pnl_indexer.config.yml`.
+
+Runtime credentials are loaded only from environment variables (not from source control):
+- `BRPC_FED3E007AAFAA26E_RPC_URL`
+- `BLOCK6_IAM_TOKEN`
+
+```bash
+cd Genesis-Conductor/indexer
+podman-compose build
+podman-compose run --rm evm-pnl-indexer
+```
+
+See [`docs/PNL_INDEXER.md`](docs/PNL_INDEXER.md) for details.

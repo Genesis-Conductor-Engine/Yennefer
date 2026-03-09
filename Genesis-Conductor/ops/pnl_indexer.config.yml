@@ -1,0 +1,43 @@
+endpoint:
+  env_rpc_url: BRPC_FED3E007AAFAA26E_RPC_URL
+  env_iam_token: BLOCK6_IAM_TOKEN
+  iam_header: x-block6-iam
+  timeout_seconds: 20
+
+networks:
+  - name: Ethereum
+    chain_id: 1
+    native_symbol: ETH
+    wallets:
+      - name: Treasury
+        address: "0xYOUR_TREASURY_ADDRESS"
+      - name: Deployer
+        address: "0xYOUR_DEPLOYER_ADDRESS"
+      - name: Seismic Reserve
+        address: "0xYOUR_RESERVE_ADDRESS"
+    assets:
+      - symbol: ETH
+        type: native
+      - symbol: USDC
+        type: erc20
+        address: "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        decimals: 6
+      - symbol: USDT
+        type: erc20
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        decimals: 6
+
+pricing_usd:
+  ETH: 3500
+  USDC: 1
+  USDT: 1
+
+# Baseline cost basis for exact local PnL snapshots:
+# pnl_usd = current_valuation_usd - baseline_usd
+baselines:
+  Treasury:
+    baseline_usd: 0
+  Deployer:
+    baseline_usd: 0
+  Seismic Reserve:
+    baseline_usd: 0

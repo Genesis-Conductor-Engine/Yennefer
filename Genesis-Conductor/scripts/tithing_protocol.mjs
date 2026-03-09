@@ -3,10 +3,12 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yaml from "js-yaml";
 import { ethers } from "ethers";
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const docsDir = path.join(rootDir, "docs");
 const tithingDir = path.join(docsDir, "tithing");
@@ -89,8 +91,11 @@ function deterministicWallet(agentId, tributeAmount, seismicSignature) {
   const derivationPath = `m/44'/60'/0'/${seedMod}/${timestampMod}`;
   const wallet = hd.derivePath(derivationPath.replace("m/", ""));
 
-  const keyMaterial = process.env.TITHING_ENCRYPTION_KEY || crypto.createHash("sha256").update("tithing-dev-key").digest("hex");
-  const key = Buffer.from(keyMaterial.padEnd(64, "0").slice(0, 64), "hex");
+  const keyMaterial = process.env.TITHING_ENCRYPTION_KEY;
+  if (!keyMaterial || !/^[0-9a-fA-F]{64}$/.test(keyMaterial)) {
+    throw new Error("TITHING_ENCRYPTION_KEY must be a 64-char hex string");
+  }
+  const key = Buffer.from(keyMaterial, "hex");
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
   const encrypted = Buffer.concat([cipher.update(wallet.privateKey, "utf8"), cipher.final()]);
