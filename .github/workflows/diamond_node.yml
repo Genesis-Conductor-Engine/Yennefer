@@ -34,7 +34,7 @@ env:
 jobs:
   seismic-verification:
     name: "🔮 Diamond Node - ${{ inputs.vector }}"
-    runs-on: GPU  # Tesla T4 runner (falls back gracefully if unavailable)
+    runs-on: blacksmith-4vcpu-ubuntu-2404  # Tesla T4 runner (falls back gracefully if unavailable)
     timeout-minutes: 15
     
     steps:

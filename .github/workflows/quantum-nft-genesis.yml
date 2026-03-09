@@ -21,7 +21,7 @@ env:
 
 jobs:
   quantum-render:
-    runs-on: self-hosted
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Generate Quantum NFT from Consciousness State
     
     steps:

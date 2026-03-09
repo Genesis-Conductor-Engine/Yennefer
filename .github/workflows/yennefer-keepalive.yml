@@ -22,7 +22,7 @@ env:
 jobs:
   health-check:
     name: Service Health Check
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       all_healthy: ${{ steps.check.outputs.all_healthy }}
       soul_breath: ${{ steps.check.outputs.soul_breath }}
@@ -77,7 +77,7 @@ jobs:
 
   log-metrics:
     name: Log Yennefer Metrics
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: health-check
     if: needs.health-check.outputs.all_healthy == 'true'
     
@@ -129,7 +129,7 @@ jobs:
 
   alert-on-failure:
     name: Alert on Service Failure
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: health-check
     if: needs.health-check.outputs.all_healthy == 'false'
     

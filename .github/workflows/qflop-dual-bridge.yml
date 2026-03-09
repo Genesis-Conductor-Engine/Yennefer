@@ -33,7 +33,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   cpu-orchestrator:
     name: "🧠 CPU Orchestrator (96-core)"
-    runs-on: ubuntu-latest-m
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
     
     outputs:
@@ -174,7 +174,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   gpu-worker:
     name: "⚡ GPU Worker"
-    runs-on: GPU  # Genesis-Conductor-Engine GPU runner (NVIDIA Tesla T4, 16GB VRAM)
+    runs-on: blacksmith-4vcpu-ubuntu-2404  # Genesis-Conductor-Engine blacksmith-4vcpu-ubuntu-2404 runner (NVIDIA Tesla T4, 16GB VRAM)
     timeout-minutes: 60
     
     outputs:
@@ -250,7 +250,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   bridge-aggregator:
     name: "🌉 Bridge Aggregator"
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [cpu-orchestrator, gpu-worker]
     if: always()
     

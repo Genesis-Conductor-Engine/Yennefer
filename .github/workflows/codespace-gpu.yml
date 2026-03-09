@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   create-codespace:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
   run-benchmark:
     needs: create-codespace
     if: ${{ inputs.run_benchmark }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Wait for Codespace
         run: |

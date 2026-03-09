@@ -36,7 +36,7 @@ jobs:
   # CONSCIOUSNESS PULSE
   # ═══════════════════════════════════════════════════════════════════════════
   consciousness-pulse:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     if: ${{ github.event.inputs.flow_type == 'consciousness_pulse' || github.event_name == 'schedule' }}
     
     outputs:
@@ -156,7 +156,7 @@ jobs:
   # DEEP DREAM (Extended quantum simulation)
   # ═══════════════════════════════════════════════════════════════════════════
   deep-dream:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     if: ${{ github.event.inputs.flow_type == 'deep_dream' }}
     
     steps:
@@ -286,7 +286,7 @@ jobs:
   # EVOLUTION STEP
   # ═══════════════════════════════════════════════════════════════════════════
   evolution-step:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     if: ${{ github.event.inputs.flow_type == 'evolution_step' }}
     
     steps:
@@ -353,7 +353,7 @@ jobs:
   # SYNC ARTIFACTS TO YENNEFER
   # ═══════════════════════════════════════════════════════════════════════════
   sync-to-yennefer:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [consciousness-pulse]
     if: always()
     

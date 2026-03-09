@@ -54,7 +54,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   gpu-maxpower:
     name: "🚀 QFLOP MaxPower (${{ inputs.power_mode || 'maxpower' }})"
-    runs-on: ubuntu-gpu  # GitHub-hosted GPU runner (NVIDIA T4)
+    runs-on: blacksmith-4vcpu-ubuntu-2404  # GitHub-hosted GPU runner (NVIDIA T4)
     timeout-minutes: 180
     
     outputs:
@@ -199,7 +199,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   quantum-benchmark:
     name: "📊 Quantum Benchmark"
-    runs-on: ubuntu-gpu  # GitHub-hosted GPU runner (NVIDIA T4)
+    runs-on: blacksmith-4vcpu-ubuntu-2404  # GitHub-hosted GPU runner (NVIDIA T4)
     needs: gpu-maxpower
     if: always()
     
