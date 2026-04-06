@@ -1,0 +1,17 @@
+services:
+  evm-pnl-indexer:
+    build:
+      context: ..
+      dockerfile: indexer/Containerfile
+    image: genesis-conductor/evm-pnl-indexer:latest
+    environment:
+      BRPC_FED3E007AAFAA26E_RPC_URL: ${BRPC_FED3E007AAFAA26E_RPC_URL}
+      BLOCK6_IAM_TOKEN: ${BLOCK6_IAM_TOKEN}
+    volumes:
+      - ../docs:/data:Z
+    command:
+      - --config
+      - /app/ops/pnl_indexer.config.yml
+      - --output
+      - /data/pnl_status.json
+    restart: "no"

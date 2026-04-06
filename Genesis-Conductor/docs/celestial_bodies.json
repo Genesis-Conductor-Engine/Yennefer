@@ -1,0 +1,43 @@
+{
+  "bodies": [
+    {
+      "id": "CB-GENESIS-CONDUCTOR",
+      "source_path": "/workspace/Yennefer/Genesis-Conductor",
+      "body_type": "agent_repo",
+      "mass": 38078,
+      "atmosphere": {
+        "intent": "execution",
+        "personality": "adaptive",
+        "dominant_extensions": [
+          [
+            ".map",
+            720
+          ],
+          [
+            ".ts",
+            647
+          ],
+          [
+            ".js",
+            453
+          ],
+          [
+            ".json",
+            35
+          ],
+          [
+            ".md",
+            29
+          ]
+        ]
+      },
+      "gravity": 100.0,
+      "seismic_test": {
+        "invariant_files": 1916,
+        "pressure_score": 1.0,
+        "passed": true
+      },
+      "generated_at": "2026-02-25T02:15:16.447857+00:00"
+    }
+  ]
+}

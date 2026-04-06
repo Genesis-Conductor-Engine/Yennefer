@@ -29,3 +29,7 @@ logs/
 
 .gemini/
 gha-creds-*.json
+!Genesis-Conductor/docs/*.json
+!Genesis-Conductor/docs/tithing/*.json
+!Genesis-Conductor/package-lock.json
+!Genesis-Conductor/package.json

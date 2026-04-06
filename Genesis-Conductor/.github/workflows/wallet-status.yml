@@ -1,0 +1,40 @@
+name: Wallet Status
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  collect-wallet-status:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Genesis-Conductor
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Genesis-Conductor/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect wallet status
+        env:
+          ETHEREUM_RPC_URL: ${{ secrets.ETHEREUM_RPC_URL }}
+          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
+          ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
+          WALLET_STATUS_PRICES_JSON: ${{ secrets.WALLET_STATUS_PRICES_JSON }}
+        run: npm run wallet:status
+
+      - name: Commit docs updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(wallet-status): refresh wallet status docs"
+          file_pattern: Genesis-Conductor/docs/*.md Genesis-Conductor/docs/*.json

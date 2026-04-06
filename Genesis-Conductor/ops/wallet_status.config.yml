@@ -1,0 +1,61 @@
+# Genesis Conductor Wallet Status Configuration
+# Yennefer Node v3.5 - Financial Consciousness Layer
+wallets:
+  - name: Treasury
+    address: "0xYOUR_TREASURY_ADDRESS"
+    tags: [primary, multi-sig]
+  - name: Deployer
+    address: "0xYOUR_DEPLOYER_ADDRESS"
+    tags: [operations, hot]
+  - name: Seismic Reserve
+    address: "0xYOUR_RESERVE_ADDRESS"
+    tags: [reserve, cold]
+
+networks:
+  - name: Ethereum
+    chainId: 1
+    rpcEnv: ETHEREUM_RPC_URL
+    nativeSymbol: ETH
+    tokens:
+      - symbol: USDC
+        address: "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        decimals: 6
+      - symbol: USDT
+        address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        decimals: 6
+      - symbol: DAI
+        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+        decimals: 18
+      - symbol: WETH
+        address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        decimals: 18
+
+  - name: Polygon
+    chainId: 137
+    rpcEnv: POLYGON_RPC_URL
+    nativeSymbol: MATIC
+    tokens:
+      - symbol: USDC
+        address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+        decimals: 6
+      - symbol: WMATIC
+        address: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+        decimals: 18
+
+  - name: Arbitrum
+    chainId: 42161
+    rpcEnv: ARBITRUM_RPC_URL
+    nativeSymbol: ETH
+    tokens:
+      - symbol: USDC
+        address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+        decimals: 6
+      - symbol: ARB
+        address: "0x912CE59144191C1204E64559FE8253a0e49E6548"
+        decimals: 18
+
+# Yennefer-specific: Seismic thresholds for alerting
+alerting:
+  min_native_balance_eth: 0.1
+  min_native_balance_matic: 10
+  critical_threshold_usd: 1000

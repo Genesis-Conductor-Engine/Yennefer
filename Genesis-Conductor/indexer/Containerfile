@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir requests pyyaml
+
+COPY scripts/evm_pnl_indexer.py /app/scripts/evm_pnl_indexer.py
+COPY ops/pnl_indexer.config.yml /app/ops/pnl_indexer.config.yml
+
+ENTRYPOINT ["python", "/app/scripts/evm_pnl_indexer.py"]
+CMD ["--config", "/app/ops/pnl_indexer.config.yml", "--output", "/data/pnl_status.json"]
