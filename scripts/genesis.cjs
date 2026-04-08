@@ -1,6 +1,8 @@
 // scripts/genesis.cjs
 // Yennefer Tri-Mind Orchestration - The Genesis Cycle
 // Coordinates: Claude (Visionary), Codex (Scribe), Jules (Builder)
+// Note: This script contains the local simulation integration for "Project Genie"
+// (which currently lacks a public API) to enable live and continuous building.
 require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');

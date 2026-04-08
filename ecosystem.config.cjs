@@ -6,7 +6,7 @@ module.exports = {
     // === CORE SERVICES ===
     {
       name: 'diamond-vault',
-      script: '/home/yenn/genesis-q-mem/qmcp_admin_panel.py',
+      script: './genesis-q-mem/qmcp_admin_panel.py',
       interpreter: 'python3',
       autorestart: true,
       watch: false,
@@ -19,7 +19,7 @@ module.exports = {
     },
     {
       name: 'diamond-watchdog',
-      script: '/home/yenn/genesis-q-mem/qmcp_diamond_watchdog.py',
+      script: './genesis-q-mem/qmcp_diamond_watchdog.py',
       interpreter: 'python3',
       autorestart: true,
       watch: false,
@@ -32,7 +32,7 @@ module.exports = {
     },
     {
       name: 'a2a-handoff',
-      script: '/home/yenn/genesis-q-mem/a2a_handoff_server.py',
+      script: './genesis-q-mem/a2a_handoff_server.py',
       interpreter: 'python3',
       autorestart: true,
       watch: false,
@@ -44,10 +44,25 @@ module.exports = {
       }
     },
 
+    // === PROJECT GENIE ===
+    {
+      name: 'project-genie',
+      script: './scripts/genesis.cjs',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      restart_delay: 5000,
+      env: {
+        GENESIS_LOOP: 'true',
+        FORCE_MUTATION: 'true',
+        ALWAYS_ON: 'true'
+      }
+    },
+
     // === BLOCKCHAIN SERVICES ===
     {
       name: 'qmcp-bridge',
-      script: '/home/yenn/scripts/qmcp_genesis_bridge.cjs',
+      script: './scripts/qmcp_genesis_bridge.cjs',
       autorestart: true,
       watch: false,
       max_memory_restart: '300M',
@@ -59,7 +74,7 @@ module.exports = {
     },
     {
       name: 'eth-bridge',
-      script: '/home/yenn/scripts/eth_optimism_bridge.cjs',
+      script: './scripts/eth_optimism_bridge.cjs',
       autorestart: true,
       watch: false,
       max_memory_restart: '300M',
@@ -71,7 +86,7 @@ module.exports = {
     },
     {
       name: 'genesis-deployer',
-      script: '/home/yenn/scripts/genesis_deployer.cjs',
+      script: './scripts/genesis_deployer.cjs',
       autorestart: true,
       watch: false,
       max_memory_restart: '200M',
@@ -85,7 +100,7 @@ module.exports = {
     // === MINING & MONITORING ===
     {
       name: 'qflop-miner',
-      script: '/home/yenn/genesis-q-mem/qmcp_qflop_miner.py',
+      script: './genesis-q-mem/qmcp_qflop_miner.py',
       interpreter: 'python3',
       autorestart: true,
       watch: false,
@@ -98,7 +113,7 @@ module.exports = {
     },
     {
       name: 'process-guardian',
-      script: '/home/yenn/scripts/process_guardian.cjs',
+      script: './scripts/process_guardian.cjs',
       autorestart: true,
       watch: false,
       max_memory_restart: '200M',
