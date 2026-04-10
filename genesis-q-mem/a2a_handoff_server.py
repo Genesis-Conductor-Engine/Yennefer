@@ -15,6 +15,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import threading
 
+from celestial_ingestion import IngestionError, ingest_repository
+
 app = Flask(__name__)
 CORS(app)
 
@@ -242,6 +244,27 @@ def list_sessions():
     return jsonify({
         "sessions": list(manager.active_sessions.values()),
         "count": len(manager.active_sessions)
+    })
+
+
+@app.route('/api/a2a/ingest', methods=['POST'])
+def ingest_celestial_body():
+    """Convert a raw repository path into a CelestialBody payload."""
+    data = request.json or {}
+    repo_path = data.get("repo_path")
+    metadata = data.get("metadata", {})
+
+    if not repo_path:
+        return jsonify({"error": "repo_path is required"}), 400
+
+    try:
+        body = ingest_repository(repo_path, metadata)
+    except IngestionError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({
+        "status": "ingested",
+        "celestial_body": body
     })
 
 @app.route('/api/a2a/queue', methods=['GET'])
