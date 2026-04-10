@@ -16,10 +16,6 @@ func main() {
 
 	srv := NewServer(statePath, port)
 
-	if _, err := os.Stat(statePath); os.IsNotExist(err) {
-		srv.sim.resetInitialState()
-	}
-
 	go func() {
 		if err := srv.Start(); err != nil {
 			log.Fatalf("Server failed: %v", err)

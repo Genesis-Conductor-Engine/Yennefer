@@ -24,8 +24,23 @@ func NewSimulator(path string) *Simulator {
 		rng:  rand.New(rand.NewSource(time.Now().UnixNano())), //nolint:gosec
 		stop: make(chan struct{}),
 	}
-	s.resetInitialState()
+	s.loadOrReset()
 	return s
+}
+
+// loadOrReset loads persisted state from disk if available; otherwise seeds
+// with defaults.  Called once at construction — never during steady-state.
+func (s *Simulator) loadOrReset() {
+	data, err := os.ReadFile(s.path)
+	if err == nil {
+		var st State
+		if jsonErr := json.Unmarshal(data, &st); jsonErr == nil {
+			s.state = st
+			return
+		}
+		log.Printf("loadOrReset: corrupt state file, resetting defaults: %v", err)
+	}
+	s.resetInitialState()
 }
 
 func (s *Simulator) resetInitialState() {
