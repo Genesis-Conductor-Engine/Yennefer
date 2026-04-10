@@ -3,14 +3,9 @@ main            = "workers/index.js"
 compatibility_date  = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# ─── Build step ───────────────────────────────────────────────────────────────
-# Runs before every `wrangler deploy` (including Cloudflare's native CI).
-# NODE_OPTIONS flag works around the OpenSSL compatibility issue in
-# react-scripts 5.x on Node 18+.
-[build]
-command = "cd frontend && npm install --include=dev && NODE_OPTIONS=--openssl-legacy-provider npm run build"
-
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
+# Built by `npm run build` (root package.json) before every `wrangler deploy`.
+# Cloudflare Workers Builds CI runs that script automatically if present.
 # The ASSETS binding serves the React bundle with proper cache headers and
 # falls back to index.html for client-side routing.
 [assets]

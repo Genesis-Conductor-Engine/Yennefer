@@ -43,9 +43,10 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
-      # wrangler.toml [build] command handles the frontend build automatically,
-      # so there is no need to build it here separately. Wrangler runs
-      # `cd frontend && npm install && npm run build` before uploading assets.
+      - name: Build React SPA
+        run: npm run build
+        env:
+          NODE_OPTIONS: '--openssl-legacy-provider'
 
       - name: Set BACKEND_URL secret on Cloudflare Worker
         # Only rotate the secret when a new Cloud Run URL is provided via
