@@ -2,17 +2,17 @@
  * CODEOWNERS: Igor Holt
  * MODULE: Yennefer Security Layer + Soul Lattice SPA Worker
  * DESCRIPTION: Cloudflare Worker — JWT Validation, Static SPA Hosting, API Proxy
+ *
+ * JWT validation uses the native Web Crypto API (no external npm deps).
+ * Cloudflare Access issues RS256 JWTs; public keys are fetched from the JWKS
+ * endpoint and cached in module-scope for the lifetime of the V8 isolate.
  */
-import { jwtVerify, createRemoteJWKSet } from 'jose';
 
 const SETTINGS = {
   AUDIENCE: "bb7516e1db2a1737ae11815f733f99940b82ea42ab46bf3d8cbd23817676a1f9",
   CERTS_URL: "https://iholt.cloudflareaccess.com/cdn-cgi/access/certs",
   ISSUER: "https://iholt.cloudflareaccess.com",
 };
-
-// JWKS with built-in caching from jose
-const JWKS = createRemoteJWKSet(new URL(SETTINGS.CERTS_URL));
 
 // Static asset extensions — served without JWT auth so the React bundle loads
 const STATIC_EXT = /\.(js|css|png|jpg|jpeg|ico|svg|woff2?|ttf|eot|map|webp)$/;
@@ -51,7 +51,30 @@ export default {
   },
 };
 
-// ─── JWT Validation ───────────────────────────────────────────────────────────
+// ─── JWKS cache ───────────────────────────────────────────────────────────────
+// Module-scope variables persist for the lifetime of the V8 isolate (~minutes).
+
+let _jwksCache = null;
+let _jwksCacheAt = 0;
+const JWKS_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+async function getJWKS() {
+  const now = Date.now();
+  if (_jwksCache && now - _jwksCacheAt < JWKS_TTL_MS) return _jwksCache;
+  const res = await fetch(SETTINGS.CERTS_URL);
+  if (!res.ok) throw new Error(`JWKS fetch failed with status ${res.status}`);
+  _jwksCache = await res.json();
+  _jwksCacheAt = now;
+  return _jwksCache;
+}
+
+// ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
+
+function base64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
 
 async function validateJWT(request) {
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
@@ -67,10 +90,38 @@ async function validateJWT(request) {
   }
 
   try {
-    const { payload } = await jwtVerify(jwt, JWKS, {
-      issuer: SETTINGS.ISSUER,
-      audience: SETTINGS.AUDIENCE,
-    });
+    const parts = jwt.split('.');
+    if (parts.length !== 3) throw new Error('Malformed JWT');
+    const [headerB64, payloadB64, sigB64] = parts;
+
+    const dec = new TextDecoder();
+    const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
+    const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+
+    // Find the matching public key by kid
+    const jwks = await getJWKS();
+    const jwk = jwks.keys.find(k => k.kid === header.kid);
+    if (!jwk) throw new Error(`No JWKS key for kid=${header.kid}`);
+
+    // Cloudflare Access uses RS256 (RSASSA-PKCS1-v1_5 + SHA-256)
+    const cryptoKey = await crypto.subtle.importKey(
+      'jwk', jwk,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false, ['verify'],
+    );
+
+    const message = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+    const valid = await crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5', cryptoKey, base64UrlDecode(sigB64), message,
+    );
+    if (!valid) throw new Error('Signature verification failed');
+
+    // Validate standard claims
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) throw new Error('Token expired');
+    if (payload.iss !== SETTINGS.ISSUER) throw new Error('Unexpected issuer');
+    const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+    if (!aud.includes(SETTINGS.AUDIENCE)) throw new Error('Audience mismatch');
 
     console.log(`[Yennefer] Authenticated: ${payload.email} at ${new Date().toISOString()}`);
     return { ok: true, email: payload.email };

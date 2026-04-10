@@ -67,9 +67,11 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	s.httpSrv.Shutdown(ctx) //nolint:errcheck
+	if s.httpSrv != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		s.httpSrv.Shutdown(ctx) //nolint:errcheck
+	}
 	s.sim.Stop()
 }
 

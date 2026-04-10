@@ -59,8 +59,10 @@ echo "Cloud Run URL: ${CLOUD_RUN_URL}"
 # Pass via stdin so the value never appears in process arguments or shell history.
 echo "${CLOUD_RUN_URL}" | npx wrangler secret put BACKEND_URL --env production
 
+echo "Building React SPA..."
+npm run build
+
 echo "Deploying Cloudflare Worker + SPA..."
-# wrangler deploy triggers [build] in wrangler.toml, which builds the React frontend.
 npx wrangler deploy --env production
 
 echo ""
