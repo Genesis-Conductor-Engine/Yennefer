@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 # NODE_OPTIONS flag works around the OpenSSL compatibility issue in
 # react-scripts 5.x on Node 18+.
 [build]
-command = "cd frontend && npm ci && NODE_OPTIONS=--openssl-legacy-provider npm run build"
+command = "cd frontend && npm install && NODE_OPTIONS=--openssl-legacy-provider npm run build"
 
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
 # The ASSETS binding serves the React bundle with proper cache headers and
