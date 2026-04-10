@@ -3,10 +3,16 @@ main            = "workers/index.js"
 compatibility_date  = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+# ─── Build step ───────────────────────────────────────────────────────────────
+# Runs before every `wrangler deploy` (including Cloudflare's native CI).
+# NODE_OPTIONS flag works around the OpenSSL compatibility issue in
+# react-scripts 5.x on Node 18+.
+[build]
+command = "cd frontend && npm ci && NODE_OPTIONS=--openssl-legacy-provider npm run build"
+
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
-# After `npm run build` in frontend/, the dist goes to frontend/build.
-# The ASSETS binding lets the worker serve files with proper cache headers and
-# fall back to index.html for client-side routing.
+# The ASSETS binding serves the React bundle with proper cache headers and
+# falls back to index.html for client-side routing.
 [assets]
 directory = "frontend/build"
 binding   = "ASSETS"
@@ -16,15 +22,13 @@ binding   = "ASSETS"
 mode = "smart"
 
 # ─── Production environment (yennefer.quest) ─────────────────────────────────
+# BACKEND_URL is set as a Cloudflare Worker secret (not a plain var) so it
+# stays encrypted and is never committed to source:
+#   echo "<cloud-run-url>" | npx wrangler secret put BACKEND_URL --env production
 [env.production]
 routes = [
   { pattern = "yennefer.quest/*", zone_name = "yennefer.quest" },
 ]
-
-[env.production.vars]
-# Cloud Run service URL for the Go Soul Lattice backend.
-# Override with `wrangler secret put BACKEND_URL` to keep it out of source.
-BACKEND_URL = "https://soul-lattice-<hash>-uc.a.run.app"
 
 # ─── Preview / staging environment ───────────────────────────────────────────
 [env.staging]
