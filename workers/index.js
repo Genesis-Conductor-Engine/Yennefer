@@ -133,7 +133,6 @@ async function validateJWT(request) {
     const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
     if (!aud.includes(SETTINGS.AUDIENCE)) throw new Error('Audience mismatch');
 
-    console.log(`[Yennefer] Authenticated sub=${payload.sub} at ${new Date().toISOString()}`);
     return { ok: true, email: payload.email };
   } catch (error) {
     console.error('[Yennefer] JWT Validation Failed:', error.message);
