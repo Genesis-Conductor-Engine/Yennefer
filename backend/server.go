@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,9 +13,10 @@ import (
 )
 
 type Server struct {
-	sim    *Simulator
-	router *chi.Mux
-	port   string
+	sim     *Simulator
+	router  *chi.Mux
+	port    string
+	httpSrv *http.Server
 }
 
 func NewServer(statePath string, port string) *Server {
@@ -53,11 +55,21 @@ func NewServer(statePath string, port string) *Server {
 
 func (s *Server) Start() error {
 	s.sim.Start()
+	s.httpSrv = &http.Server{
+		Addr:    ":" + s.port,
+		Handler: s.router,
+	}
 	fmt.Printf("SOUL LATTICE v4 AWAKENED on port %s\n", s.port)
-	return http.ListenAndServe(":"+s.port, s.router)
+	if err := s.httpSrv.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+	return nil
 }
 
 func (s *Server) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s.httpSrv.Shutdown(ctx) //nolint:errcheck
 	s.sim.Stop()
 }
 

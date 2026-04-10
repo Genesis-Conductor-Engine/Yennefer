@@ -99,7 +99,9 @@ func (s *Simulator) drift() {
 }
 
 func (s *Simulator) flush() {
+	s.mu.RLock()
 	data, _ := json.MarshalIndent(s.state, "", "  ")
+	s.mu.RUnlock()
 	os.WriteFile(s.path, data, 0644)
 }
 

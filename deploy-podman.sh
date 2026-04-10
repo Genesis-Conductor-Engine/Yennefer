@@ -4,6 +4,10 @@ set -e
 echo "SOUL LATTICE v4 - Podman Deployment Ritual"
 echo "================================================"
 
+# Required environment variables
+: "${CLOUDFLARE_API_TOKEN:?CLOUDFLARE_API_TOKEN must be set}"
+: "${CLOUDFLARE_ACCOUNT_ID:?CLOUDFLARE_ACCOUNT_ID must be set}"
+
 PROJECT_ID=$(gcloud config get-value project)
 REGION="us-central1"
 SERVICE_NAME="soul-lattice"
@@ -25,6 +29,10 @@ echo "Pushing to GCR..."
 podman push ${IMAGE_TAG}
 
 echo "Deploying to Cloud Run..."
+# NOTE: --allow-unauthenticated is intentional — authentication is enforced at
+# the Cloudflare Worker layer (JWT validation). The Cloud Run URL is stored as
+# an encrypted Cloudflare Worker secret and is never made public. Do not expose
+# the BACKEND_URL in logs, URLs, or documentation.
 gcloud run deploy ${SERVICE_NAME} \
     --image ${IMAGE_TAG} \
     --region ${REGION} \
@@ -38,22 +46,29 @@ gcloud run deploy ${SERVICE_NAME} \
     --execution-environment gen2 \
     --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
 
-echo "Building React cockpit..."
-cd ../frontend
-npm install
-npm run build
-
-echo "Deploying to Firebase Hosting..."
+# Capture the stable Cloud Run service URL (more reliable than parsing deploy output)
 cd ..
-firebase deploy --only hosting
+CLOUD_RUN_URL=$(gcloud run services describe ${SERVICE_NAME} \
+    --region ${REGION} \
+    --platform managed \
+    --format 'value(status.url)')
+
+echo "Cloud Run URL: ${CLOUD_RUN_URL}"
+
+# Inject the backend URL into the Cloudflare Worker as an encrypted secret.
+# Pass via stdin so the value never appears in process arguments or shell history.
+echo "${CLOUD_RUN_URL}" | npx wrangler secret put BACKEND_URL --env production
+
+echo "Deploying Cloudflare Worker + SPA..."
+# wrangler deploy triggers [build] in wrangler.toml, which builds the React frontend.
+npx wrangler deploy --env production
 
 echo ""
 echo "Deployment complete!"
 echo ""
-HOSTING_URL=$(firebase hosting:channel:list | grep -o 'https://[^ ]*' | head -1)
-echo "Frontend URL: ${HOSTING_URL}"
-echo "API Status: ${HOSTING_URL}/api/"
-echo "SSE Stream: ${HOSTING_URL}/api/events"
+echo "Frontend URL: https://yennefer.quest"
+echo "API status:   https://yennefer.quest/api/state"
+echo "SSE stream:   https://yennefer.quest/api/events"
 echo ""
-echo "Test the stream:"
-echo "curl ${HOSTING_URL}/api/events"
+echo "Test the stream (requires a valid Cloudflare Access session):"
+echo "curl -N https://yennefer.quest/api/events"
