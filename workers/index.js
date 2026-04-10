@@ -26,23 +26,36 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    // 2. Health check — unauthenticated, used by uptime monitors
+    // 2. Worker-only health check — unauthenticated, used by uptime monitors
     if (url.pathname === '/health') {
       return new Response('OK', { status: 200 });
     }
 
-    // 3. All other traffic requires a valid Cloudflare Access JWT
+    // 3. Backend health passthrough — unauthenticated; verifies BACKEND_URL is
+    //    reachable. Proxies to the Go server's /health (chi Heartbeat middleware)
+    //    so CI can confirm end-to-end connectivity after deploy.
+    if (url.pathname === '/api/health') {
+      const backendBase = (env.BACKEND_URL || 'http://localhost:8080').replace(/\/$/, '');
+      try {
+        return await fetch(`${backendBase}/health`);
+      } catch (err) {
+        console.error('[Yennefer] Backend health check failed:', err.message);
+        return new Response('Backend Unavailable', { status: 502 });
+      }
+    }
+
+    // 4. All other traffic requires a valid Cloudflare Access JWT
     const authResult = await validateJWT(request);
     if (!authResult.ok) {
       return authResult.response;
     }
 
-    // 4. API proxy — forward /api/* to the Go backend (Cloud Run or env.BACKEND_URL)
+    // 5. API proxy — forward /api/* to the Go backend (Cloud Run or env.BACKEND_URL)
     if (url.pathname.startsWith('/api/')) {
       return proxyToBackend(request, url, env, authResult.email);
     }
 
-    // 5. SPA fallback — all remaining routes get index.html so React Router works
+    // 6. SPA fallback — all remaining routes get index.html so React Router works
     const indexRequest = new Request(new URL('/', url).toString(), {
       method: 'GET',
       headers: request.headers,

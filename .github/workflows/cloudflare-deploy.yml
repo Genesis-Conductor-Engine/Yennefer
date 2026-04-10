@@ -79,11 +79,19 @@ jobs:
           ENV="${{ github.event.inputs.environment || 'production' }}"
           npx wrangler deploy --env "${ENV}"
 
-      - name: Smoke test health endpoint
+      - name: Smoke test health endpoints
         if: ${{ github.event.inputs.environment != 'staging' }}
         run: |
           echo "Waiting 10s for global propagation..."
           sleep 10
+
+          # Worker-only health — verifies the Cloudflare Worker is deployed
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://yennefer.quest/health)
-          echo "Health check: ${STATUS}"
-          [ "${STATUS}" = "200" ] || { echo "Health check failed"; exit 1; }
+          echo "Worker health: ${STATUS}"
+          [ "${STATUS}" = "200" ] || { echo "Worker health check failed"; exit 1; }
+
+          # Backend passthrough — verifies BACKEND_URL is configured and the
+          # Go service is reachable from the Worker
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://yennefer.quest/api/health)
+          echo "Backend health: ${STATUS}"
+          [ "${STATUS}" = "200" ] || { echo "Backend health check failed"; exit 1; }
