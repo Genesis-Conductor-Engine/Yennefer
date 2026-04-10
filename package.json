@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "hardhat test",
-    "build": "cd frontend && npm install --include=dev && CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build",
+    "build": "cd frontend && npm run build",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy --env production",
     "worker:deploy:staging": "wrangler deploy --env staging"

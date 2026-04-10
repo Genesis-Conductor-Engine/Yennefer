@@ -43,9 +43,18 @@ jobs:
       - name: Install root dependencies
         run: npm ci
 
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Build React SPA
+        # CI=false: react-scripts 5 treats warnings as errors when CI=true; suppress
+        # that so transient lint notices don't break an otherwise-valid deploy.
+        # NODE_OPTIONS: react-scripts 5 / webpack 4 require the legacy OpenSSL
+        # provider on Node 18+.
         run: npm run build
         env:
+          CI: 'false'
           NODE_OPTIONS: '--openssl-legacy-provider'
 
       - name: Set BACKEND_URL secret on Cloudflare Worker

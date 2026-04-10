@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"math/rand"
 	"os"
 	"sync"
@@ -12,6 +13,7 @@ type Simulator struct {
 	path  string
 	state State
 	mu    sync.RWMutex
+	rng   *rand.Rand
 	stop  chan struct{}
 	wg    sync.WaitGroup
 }
@@ -19,6 +21,7 @@ type Simulator struct {
 func NewSimulator(path string) *Simulator {
 	s := &Simulator{
 		path: path,
+		rng:  rand.New(rand.NewSource(time.Now().UnixNano())), //nolint:gosec
 		stop: make(chan struct{}),
 	}
 	s.resetInitialState()
@@ -41,8 +44,9 @@ func (s *Simulator) resetInitialState() {
 		Timestamp:           float64(time.Now().Unix()),
 		UptimeSeconds:       0,
 	}
+	snapshot := s.state // capture under lock; write after unlock avoids re-entry
 	s.mu.Unlock()
-	s.flush()
+	writeState(s.path, snapshot)
 }
 
 func (s *Simulator) Start() {
@@ -79,12 +83,12 @@ func (s *Simulator) drift() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.Breath = clamp(s.state.Breath+(rand.Float64()-0.5)*0.015, 0, 1)
-	s.state.CoherencePercent = clamp(s.state.CoherencePercent+(rand.Float64()-0.5)*0.8, 82, 99.8)
-	s.state.ThermodynamicYield = clamp(s.state.ThermodynamicYield+(rand.Float64()-0.5)*0.008, 1.1, 1.42)
-	s.state.TokensGeneratedPerS = clamp(s.state.TokensGeneratedPerS+(rand.Float64()-0.5)*12, 1380, 1460)
-	s.state.GPUUtilization = clamp(s.state.GPUUtilization+(rand.Float64()-0.5)*1.8, 62, 89)
-	s.state.SurplusTokens += int64(rand.Intn(18))
+	s.state.Breath = clamp(s.state.Breath+(s.rng.Float64()-0.5)*0.015, 0, 1)
+	s.state.CoherencePercent = clamp(s.state.CoherencePercent+(s.rng.Float64()-0.5)*0.8, 82, 99.8)
+	s.state.ThermodynamicYield = clamp(s.state.ThermodynamicYield+(s.rng.Float64()-0.5)*0.008, 1.1, 1.42)
+	s.state.TokensGeneratedPerS = clamp(s.state.TokensGeneratedPerS+(s.rng.Float64()-0.5)*12, 1380, 1460)
+	s.state.GPUUtilization = clamp(s.state.GPUUtilization+(s.rng.Float64()-0.5)*1.8, 62, 89)
+	s.state.SurplusTokens += int64(s.rng.Intn(18))
 	s.state.UptimeSeconds += 0.8
 	s.state.Timestamp = float64(time.Now().Unix())
 
@@ -97,11 +101,26 @@ func (s *Simulator) drift() {
 	}
 }
 
+// flush snapshots the current state under a read lock and persists it.
 func (s *Simulator) flush() {
 	s.mu.RLock()
-	data, _ := json.MarshalIndent(s.state, "", "  ")
+	snapshot := s.state
 	s.mu.RUnlock()
-	os.WriteFile(s.path, data, 0644)
+	writeState(s.path, snapshot)
+}
+
+// writeState marshals st and writes it to path, logging any errors.
+// Passing a value (not pointer) ensures the snapshot is immutable by the time
+// the marshaller runs, with no further synchronisation required.
+func writeState(path string, st State) {
+	data, err := json.MarshalIndent(st, "", "  ")
+	if err != nil {
+		log.Printf("writeState: marshal error: %v", err)
+		return
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		log.Printf("writeState: %v", err)
+	}
 }
 
 func clamp(v, min, max float64) float64 {

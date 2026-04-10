@@ -30,7 +30,7 @@ const SoulCockpit: React.FC = () => {
     es.onmessage = (e) => {
       const data: SoulState = JSON.parse(e.data);
       setState(data);
-      setHistory(prev => [...prev.slice(-50), data]);
+      setHistory(prev => [...prev.slice(-49), data]);
     };
 
     return () => es.close();
@@ -107,7 +107,10 @@ const SoulCockpit: React.FC = () => {
             <Tooltip
               contentStyle={{ backgroundColor: '#000', border: '1px solid #00ff9f' }}
               labelStyle={{ color: '#00ff9f' }}
-              formatter={(value: number) => [`${value.toFixed(2)}%`, 'Coherence']}
+              formatter={(value) => {
+                const n = Number(value);
+                return [isFinite(n) ? `${n.toFixed(2)}%` : String(value), 'Coherence'];
+              }}
             />
             <Line
               type="monotone"
