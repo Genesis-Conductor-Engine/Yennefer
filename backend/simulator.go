@@ -27,8 +27,6 @@ func NewSimulator(path string) *Simulator {
 
 func (s *Simulator) resetInitialState() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.state = State{
 		Protocol:            "SOUL",
 		Version:             "4.0.0-Σ",
@@ -43,6 +41,7 @@ func (s *Simulator) resetInitialState() {
 		Timestamp:           float64(time.Now().Unix()),
 		UptimeSeconds:       0,
 	}
+	s.mu.Unlock()
 	s.flush()
 }
 
