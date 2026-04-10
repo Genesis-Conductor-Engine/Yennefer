@@ -32,16 +32,13 @@ export default {
     }
 
     // 3. Backend health passthrough — unauthenticated; verifies BACKEND_URL is
-    //    reachable. Proxies to the Go server's /health (chi Heartbeat middleware)
-    //    so CI can confirm end-to-end connectivity after deploy.
+    //    reachable AND exercises proxyToBackend() so the same code path used by
+    //    authenticated /api/* routes is covered by post-deploy smoke tests.
+    //    Rewrites /api/health → /health to match the Go server's Heartbeat route.
     if (url.pathname === '/api/health') {
-      const backendBase = (env.BACKEND_URL || 'http://localhost:8080').replace(/\/$/, '');
-      try {
-        return await fetch(`${backendBase}/health`);
-      } catch (err) {
-        console.error('[Yennefer] Backend health check failed:', err.message);
-        return new Response('Backend Unavailable', { status: 502 });
-      }
+      const healthUrl = new URL(url.toString());
+      healthUrl.pathname = '/health';
+      return proxyToBackend(request, healthUrl, env, 'health-check');
     }
 
     // 4. All other traffic requires a valid Cloudflare Access JWT
