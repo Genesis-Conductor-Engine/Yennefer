@@ -21,7 +21,18 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 1. Static assets bypass auth — browser fetches these before the JWT cookie is set
+    // 1. Static assets (JS/CSS/fonts/images) bypass JWT validation.
+    //    These are fetched by the browser after Cloudflare Access has already
+    //    authenticated the user at the edge and set the JWT cookie.  Skipping
+    //    JWKS validation on every asset avoids unnecessary crypto overhead on a
+    //    hot path.
+    //
+    //    HTML entry-points (/, /index.html) are NOT matched here and ARE gated
+    //    by validateJWT() below.  This is intentional: Cloudflare Access injects
+    //    a valid Cf-Access-Jwt-Assertion header before the Worker sees any
+    //    request, so authenticated users always arrive with a token.
+    //    Unauthenticated users are redirected to the Access login page by
+    //    Cloudflare before reaching this Worker.
     if (STATIC_EXT.test(url.pathname)) {
       return env.ASSETS.fetch(request);
     }
@@ -107,6 +118,11 @@ async function validateJWT(request) {
     const dec = new TextDecoder();
     const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
     const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+
+    // Reject unexpected algorithm/type before touching the crypto path to
+    // prevent algorithm-confusion attacks and fail fast for auditing.
+    if (header.alg !== 'RS256') throw new Error(`Unexpected JWT algorithm: ${header.alg}`);
+    if (header.typ && header.typ !== 'JWT') throw new Error(`Unexpected JWT type: ${header.typ}`);
 
     // Find the matching public key by kid
     const jwks = await getJWKS();

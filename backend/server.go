@@ -92,18 +92,24 @@ func (s *Server) handleFlush(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
 
+	// Marshal before writing headers so we can still return a 500 on failure.
 	st := s.sim.GetState()
-	data, _ := json.Marshal(st)
+	data, err := json.Marshal(st)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
 	fmt.Fprintf(w, "data: %s\n\n", data)
 	flusher.Flush()
 
@@ -116,7 +122,12 @@ func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 			return
 		case <-ticker.C:
 			st := s.sim.GetState()
-			data, _ := json.Marshal(st)
+			data, err := json.Marshal(st)
+			if err != nil {
+				fmt.Fprintf(w, "event: error\ndata: marshal failed\n\n")
+				flusher.Flush()
+				continue
+			}
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}

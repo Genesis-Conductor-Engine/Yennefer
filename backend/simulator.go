@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -38,7 +39,7 @@ func (s *Simulator) loadOrReset() {
 			s.state = st
 			return
 		}
-		log.Printf("loadOrReset: corrupt state file, resetting defaults: %v", err)
+		log.Printf("loadOrReset: corrupt state file, resetting defaults: %v", jsonErr)
 	}
 	s.resetInitialState()
 }
@@ -124,17 +125,39 @@ func (s *Simulator) flush() {
 	writeState(s.path, snapshot)
 }
 
-// writeState marshals st and writes it to path, logging any errors.
+// writeState marshals st and atomically replaces path via a temp-file rename,
+// preventing partial writes from corrupting the persisted snapshot on crash.
 // Passing a value (not pointer) ensures the snapshot is immutable by the time
 // the marshaller runs, with no further synchronisation required.
 func writeState(path string, st State) {
 	data, err := json.MarshalIndent(st, "", "  ")
 	if err != nil {
-		log.Printf("writeState: marshal error: %v", err)
+		log.Printf("writeState: marshal: %v", err)
 		return
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		log.Printf("writeState: %v", err)
+
+	// Write to a temp file in the same directory so os.Rename is atomic.
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".soul_state_*.json")
+	if err != nil {
+		log.Printf("writeState: create temp: %v", err)
+		return
+	}
+	tmpName := tmp.Name()
+
+	if _, err = tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		log.Printf("writeState: write temp: %v", err)
+		return
+	}
+	if err = tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		log.Printf("writeState: close temp: %v", err)
+		return
+	}
+	if err = os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
+		log.Printf("writeState: rename: %v", err)
 	}
 }
 
