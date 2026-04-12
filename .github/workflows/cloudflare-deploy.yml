@@ -8,6 +8,7 @@ on:
       - 'frontend/src/**'
       - 'frontend/public/**'
       - 'frontend/package.json'
+      - 'frontend/package-lock.json'
       - 'wrangler.toml'
       - '.github/workflows/cloudflare-deploy.yml'
   workflow_dispatch:
