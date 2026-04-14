@@ -41,7 +41,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --memory 512Mi \
     --cpu 1 \
     --concurrency 1000 \
-    --max-instances 10 \
+    --max-instances 1 \
     --min-instances 1 \
     --execution-environment gen2 \
     --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}"
