@@ -59,8 +59,12 @@ export default {
     }
 
     // 5. API proxy — forward /api/* to the Go backend.
+    //    Strip the public /api prefix so backend routes like /state, /events,
+    //    /flush, and /health are requested exactly as defined by the Go server.
     //    /api/flush is intentionally blocked here; state resets are admin-only
-    //    and should only be performed via direct backend access.
+      const backendUrl = new URL(url.toString());
+      backendUrl.pathname = url.pathname.replace(/^\/api(\/.*)?$/, (_, path = '/') => path);
+      return proxyToBackend(request, backendUrl, env, authResult.email);
     if (url.pathname.startsWith('/api/')) {
       if (url.pathname === '/api/flush') {
         return new Response('Not Found', { status: 404 });
