@@ -66,18 +66,35 @@ func (s *Simulator) resetInitialState() {
 }
 
 func (s *Simulator) Start() {
-	s.wg.Add(1)
+	s.wg.Add(2)
+
+	// Drift goroutine: advance the simulation every 800 ms.
 	go func() {
 		defer s.wg.Done()
 		ticker := time.NewTicker(800 * time.Millisecond)
 		defer ticker.Stop()
-
 		for {
 			select {
 			case <-s.stop:
 				return
 			case <-ticker.C:
 				s.drift()
+			}
+		}
+	}()
+
+	// Persist goroutine: flush to disk every 30 s, decoupled from the
+	// hot drift path so file I/O doesn't affect simulation cadence.
+	go func() {
+		defer s.wg.Done()
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-s.stop:
+				s.flush() // final flush on shutdown
+				return
+			case <-ticker.C:
 				s.flush()
 			}
 		}

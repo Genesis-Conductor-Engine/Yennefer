@@ -58,8 +58,13 @@ export default {
       return authResult.response;
     }
 
-    // 5. API proxy — forward /api/* to the Go backend (Cloud Run or env.BACKEND_URL)
+    // 5. API proxy — forward /api/* to the Go backend.
+    //    /api/flush is intentionally blocked here; state resets are admin-only
+    //    and should only be performed via direct backend access.
     if (url.pathname.startsWith('/api/')) {
+      if (url.pathname === '/api/flush') {
+        return new Response('Not Found', { status: 404 });
+      }
       return proxyToBackend(request, url, env, authResult.email);
     }
 
@@ -166,14 +171,22 @@ async function validateJWT(request) {
 
 async function proxyToBackend(request, url, env, userEmail) {
   const backendUrl = (env.BACKEND_URL || 'http://localhost:8080').replace(/\/$/, '');
-  const target = `${backendUrl}${url.pathname}${url.search}`;
+  // Strip the /api prefix: Worker routes are /api/*, but the Go backend
+  // registers routes at /state, /events, /flush, /health (no /api prefix).
+  const backendPath = url.pathname.replace(/^\/api/, '') || '/';
+  const target = `${backendUrl}${backendPath}${url.search}`;
 
   const headers = new Headers(request.headers);
   headers.set('X-User-Email', userEmail);
   headers.set('X-Forwarded-Host', url.host);
 
+  // Append to existing X-Forwarded-For chain instead of overwriting, so
+  // upstream proxies can see the full client IP chain.
   const cf = request.headers.get('CF-Connecting-IP');
-  if (cf) headers.set('X-Forwarded-For', cf);
+  if (cf) {
+    const existing = request.headers.get('X-Forwarded-For');
+    headers.set('X-Forwarded-For', existing ? `${existing}, ${cf}` : cf);
+  }
 
   // Strip Cloudflare Access headers before forwarding to the origin
   headers.delete('Cf-Access-Jwt-Assertion');
