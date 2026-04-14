@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 # Installs frontend deps and builds the SPA so frontend/build exists before
 # `wrangler deploy` uploads assets.  NODE_OPTIONS is required for
 # react-scripts 5.x + Node 18+ (webpack 4 OpenSSL 3.0 compatibility).
-command = "cd frontend && npm ci && CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build"
+command = "cd frontend && npm ci && GENERATE_SOURCEMAP=false CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build"
 
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
 # Built by `npm run build` (root package.json) before every `wrangler deploy`.
@@ -34,10 +34,10 @@ routes = [
 ]
 
 # ─── Preview / staging environment ───────────────────────────────────────────
+# BACKEND_URL must be set as an encrypted secret before deploying staging —
+# localhost:8080 is unreachable from a deployed Cloudflare Worker:
+#   echo "<staging-cloud-run-url>" | npx wrangler secret put BACKEND_URL --env staging
 [env.staging]
 routes = [
   { pattern = "staging.yennefer.quest/*", zone_name = "yennefer.quest" },
 ]
-
-[env.staging.vars]
-BACKEND_URL = "http://localhost:8080"

@@ -32,7 +32,10 @@ func NewServer(statePath string, port string) *Server {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		// Restrict to known frontend origins. The Worker is the only legitimate
+		// caller in production; the Cloud Run URL is kept secret. Wildcard origins
+		// would let any page make cross-origin requests to /flush if the URL leaked.
+		AllowedOrigins:   []string{"https://yennefer.quest", "https://staging.yennefer.quest", "http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		ExposedHeaders:   []string{"Link"},

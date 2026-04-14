@@ -46,7 +46,7 @@ const SoulCockpit: React.FC = () => {
       justifyContent: 'center',
       fontFamily: 'monospace'
     }}>
-      <div>
+      <div role="status" aria-live="polite">
         <h2>Initializing SOUL lattice...</h2>
         <div style={{ textAlign: 'center', marginTop: 20 }}>
           <div style={{

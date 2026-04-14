@@ -14,8 +14,10 @@ const SETTINGS = {
   ISSUER: "https://iholt.cloudflareaccess.com",
 };
 
-// Static asset extensions — served without JWT auth so the React bundle loads
-const STATIC_EXT = /\.(js|css|png|jpg|jpeg|ico|svg|woff2?|ttf|eot|map|webp)$/;
+// Static asset extensions — served without JWT auth so the React bundle loads.
+// Source maps (.map) are intentionally excluded: they expose readable source and
+// must either require auth or not be uploaded (GENERATE_SOURCEMAP=false at build).
+const STATIC_EXT = /\.(js|css|png|jpg|jpeg|ico|svg|woff2?|ttf|eot|webp)$/;
 
 export default {
   async fetch(request, env, ctx) {
@@ -59,12 +61,10 @@ export default {
     }
 
     // 5. API proxy — forward /api/* to the Go backend.
-    //    Strip the public /api prefix so backend routes like /state, /events,
-    //    /flush, and /health are requested exactly as defined by the Go server.
     //    /api/flush is intentionally blocked here; state resets are admin-only
-      const backendUrl = new URL(url.toString());
-      backendUrl.pathname = url.pathname.replace(/^\/api(\/.*)?$/, (_, path = '/') => path);
-      return proxyToBackend(request, backendUrl, env, authResult.email);
+    //    and should only be performed via direct backend access.
+    //    proxyToBackend strips the /api prefix before forwarding so backend
+    //    routes (/state, /events, /health) are matched exactly as registered.
     if (url.pathname.startsWith('/api/')) {
       if (url.pathname === '/api/flush') {
         return new Response('Not Found', { status: 404 });
@@ -181,7 +181,9 @@ async function proxyToBackend(request, url, env, userEmail) {
   const target = `${backendUrl}${backendPath}${url.search}`;
 
   const headers = new Headers(request.headers);
-  headers.set('X-User-Email', userEmail);
+  // Only propagate the email when the JWT actually contained the claim —
+  // absent claims produce undefined, which would stringify to "undefined".
+  if (userEmail) headers.set('X-User-Email', userEmail);
   headers.set('X-Forwarded-Host', url.host);
 
   // Append to existing X-Forwarded-For chain instead of overwriting, so
