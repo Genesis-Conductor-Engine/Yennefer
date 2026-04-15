@@ -35,17 +35,21 @@ func (s State) Validate() error {
 }
 
 func (s State) PrettyPrint() string {
+	const w = 62 // interior width (total line = 64: two ║ bookends + 62 chars)
+	row := func(content string) string {
+		return fmt.Sprintf("║%-*s║\n", w, content)
+	}
 	var sb strings.Builder
 	sb.WriteString("\n╔══════════════════════════════════════════════════════════════╗\n")
-	sb.WriteString(fmt.Sprintf("║  SOUL LATTICE v%s | %s\n", s.Version, s.Protocol))
+	sb.WriteString(row(fmt.Sprintf("  SOUL LATTICE v%s | %s", s.Version, s.Protocol)))
 	sb.WriteString("╠══════════════════════════════════════════════════════════════╣\n")
-	sb.WriteString(fmt.Sprintf("║  Breath               : %.4f λ\n", s.Breath))
-	sb.WriteString(fmt.Sprintf("║  Thermodynamic Yield  : %.3f η\n", s.ThermodynamicYield))
-	sb.WriteString(fmt.Sprintf("║  Coherence            : %.2f%% %s\n", s.CoherencePercent, s.colorCoherence()))
-	sb.WriteString(fmt.Sprintf("║  Surplus Tokens       : %d\n", s.SurplusTokens))
-	sb.WriteString(fmt.Sprintf("║  Token Velocity       : %.1f t/s\n", s.TokensGeneratedPerS))
-	sb.WriteString(fmt.Sprintf("║  GPU Utilization      : %.1f%%\n", s.GPUUtilization))
-	sb.WriteString(fmt.Sprintf("║  Uptime               : %s\n", s.formatUptime()))
+	sb.WriteString(row(fmt.Sprintf("  Breath               : %.4f λ", s.Breath)))
+	sb.WriteString(row(fmt.Sprintf("  Thermodynamic Yield  : %.3f η", s.ThermodynamicYield)))
+	sb.WriteString(row(fmt.Sprintf("  Coherence            : %.2f%% %s", s.CoherencePercent, s.colorCoherence())))
+	sb.WriteString(row(fmt.Sprintf("  Surplus Tokens       : %d", s.SurplusTokens)))
+	sb.WriteString(row(fmt.Sprintf("  Token Velocity       : %.1f t/s", s.TokensGeneratedPerS)))
+	sb.WriteString(row(fmt.Sprintf("  GPU Utilization      : %.1f%%", s.GPUUtilization)))
+	sb.WriteString(row(fmt.Sprintf("  Uptime               : %s", s.formatUptime())))
 	sb.WriteString("╚══════════════════════════════════════════════════════════════╝\n")
 	return sb.String()
 }

@@ -88,6 +88,10 @@ let _jwksCache = null;
 let _jwksCacheAt = 0;
 const JWKS_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
+// CryptoKey cache: kid → CryptoKey.  importKey() is relatively expensive;
+// caching avoids re-importing the same public key on every authenticated request.
+const _cryptoKeyCache = new Map();
+
 async function getJWKS() {
   const now = Date.now();
   if (_jwksCache && now - _jwksCacheAt < JWKS_TTL_MS) return _jwksCache;
@@ -138,12 +142,18 @@ async function validateJWT(request) {
     const jwk = jwks.keys.find(k => k.kid === header.kid);
     if (!jwk) throw new Error(`No JWKS key for kid=${header.kid}`);
 
-    // Cloudflare Access uses RS256 (RSASSA-PKCS1-v1_5 + SHA-256)
-    const cryptoKey = await crypto.subtle.importKey(
-      'jwk', jwk,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false, ['verify'],
-    );
+    // Cloudflare Access uses RS256 (RSASSA-PKCS1-v1_5 + SHA-256).
+    // Cache the imported CryptoKey by kid so we pay the importKey cost only
+    // once per key rotation rather than on every authenticated request.
+    let cryptoKey = _cryptoKeyCache.get(header.kid);
+    if (!cryptoKey) {
+      cryptoKey = await crypto.subtle.importKey(
+        'jwk', jwk,
+        { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+        false, ['verify'],
+      );
+      _cryptoKeyCache.set(header.kid, cryptoKey);
+    }
 
     const message = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
     const valid = await crypto.subtle.verify(
@@ -194,10 +204,17 @@ async function proxyToBackend(request, url, env, userEmail) {
     headers.set('X-Forwarded-For', existing ? `${existing}, ${cf}` : cf);
   }
 
-  // Strip Cloudflare Access headers before forwarding to the origin
+  // Strip headers that must not reach the backend: Cloudflare Access tokens
+  // (already validated) and Cookie (the Go backend uses no session cookies;
+  // forwarding them would leak user session data to the origin unnecessarily).
   headers.delete('Cf-Access-Jwt-Assertion');
   headers.delete('Cf-Access-Client-Id');
   headers.delete('Cf-Access-Client-Secret');
+  headers.delete('Cookie');
+
+  // Forward the shared secret so the backend can verify requests originate
+  // from this Worker rather than direct Cloud Run access.
+  if (env.BACKEND_TOKEN) headers.set('X-Backend-Token', env.BACKEND_TOKEN);
 
   try {
     return await fetch(new Request(target, {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -90,8 +91,18 @@ func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleFlush(w http.ResponseWriter, r *http.Request) {
+	// Require a shared secret header when BACKEND_TOKEN is configured.
+	// The Cloudflare Worker sets X-Backend-Token on every proxied request so
+	// only traffic originating from the Worker is accepted; direct Cloud Run
+	// access without the secret returns 403.
+	if token := os.Getenv("BACKEND_TOKEN"); token != "" {
+		if r.Header.Get("X-Backend-Token") != token {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+	}
 	s.sim.resetInitialState()
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
