@@ -1,0 +1,87 @@
+name: Deploy Cloudflare Worker + SPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - 'frontend/src/**'
+      - 'frontend/public/**'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - 'wrangler.toml'
+      - '.github/workflows/cloudflare-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build React SPA & Deploy Worker
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        # Frontend deps and SPA build are handled by the wrangler [build] command
+        # in wrangler.toml, which runs automatically before `wrangler deploy`.
+        # Installing only root deps here gives wrangler and secrets-put access.
+        run: npm ci
+
+      - name: Set BACKEND_URL secret on Cloudflare Worker
+        # Only rotate the secret when a new Cloud Run URL is provided via
+        # the BACKEND_URL GitHub Actions secret. Skip on frontend-only pushes.
+        if: ${{ secrets.BACKEND_URL != '' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          echo "${BACKEND_URL}" | npx wrangler secret put BACKEND_URL \
+            --env ${{ github.event.inputs.environment || 'production' }}
+
+      - name: Deploy Cloudflare Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # react-scripts 5.x + Node 18+ OpenSSL compatibility
+          NODE_OPTIONS: '--openssl-legacy-provider'
+        run: |
+          ENV="${{ github.event.inputs.environment || 'production' }}"
+          npx wrangler deploy --env "${ENV}"
+
+      - name: Smoke test health endpoints
+        if: ${{ github.event.inputs.environment != 'staging' }}
+        run: |
+          echo "Waiting 10s for global propagation..."
+          sleep 10
+
+          # Worker-only health — verifies the Cloudflare Worker is deployed
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://yennefer.quest/health)
+          echo "Worker health: ${STATUS}"
+          [ "${STATUS}" = "200" ] || { echo "Worker health check failed"; exit 1; }
+
+          # Backend passthrough — verifies BACKEND_URL is configured and the
+          # Go service is reachable from the Worker
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://yennefer.quest/api/health)
+          echo "Backend health: ${STATUS}"
+          [ "${STATUS}" = "200" ] || { echo "Backend health check failed"; exit 1; }

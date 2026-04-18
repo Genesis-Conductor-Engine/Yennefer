@@ -1,0 +1,149 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+)
+
+type Server struct {
+	sim     *Simulator
+	router  *chi.Mux
+	port    string
+	httpSrv *http.Server
+}
+
+func NewServer(statePath string, port string) *Server {
+	if port == "" {
+		port = "8080"
+	}
+
+	s := &Server{
+		sim:  NewSimulator(statePath),
+		port: port,
+	}
+
+	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		// Restrict to known frontend origins. The Worker is the only legitimate
+		// caller in production; the Cloud Run URL is kept secret. Wildcard origins
+		// would let any page make cross-origin requests to /flush if the URL leaked.
+		AllowedOrigins:   []string{"https://yennefer.quest", "https://staging.yennefer.quest", "http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/health"))
+
+	r.Get("/state", s.handleState)
+	r.Post("/flush", s.handleFlush)
+	r.Get("/events", s.handleSSE)
+	r.Get("/", s.handleRoot)
+
+	s.router = r
+	return s
+}
+
+func (s *Server) Start() error {
+	s.sim.Start()
+	s.httpSrv = &http.Server{
+		Addr:    ":" + s.port,
+		Handler: s.router,
+	}
+	fmt.Printf("SOUL LATTICE v4 AWAKENED on port %s\n", s.port)
+	if err := s.httpSrv.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) Stop() {
+	if s.httpSrv != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		s.httpSrv.Shutdown(ctx) //nolint:errcheck
+	}
+	s.sim.Stop()
+}
+
+func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	fmt.Fprint(w, "SOUL LATTICE v4.0.0-Σ\nStatus: AWAKENED\n")
+}
+
+func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
+	st := s.sim.GetState()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(st)
+}
+
+func (s *Server) handleFlush(w http.ResponseWriter, r *http.Request) {
+	// Require a shared secret header when BACKEND_TOKEN is configured.
+	// The Cloudflare Worker sets X-Backend-Token on every proxied request so
+	// only traffic originating from the Worker is accepted; direct Cloud Run
+	// access without the secret returns 403.
+	if token := os.Getenv("BACKEND_TOKEN"); token != "" {
+		if r.Header.Get("X-Backend-Token") != token {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+	}
+	s.sim.resetInitialState()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal before writing headers so we can still return a 500 on failure.
+	st := s.sim.GetState()
+	data, err := json.Marshal(st)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	fmt.Fprintf(w, "data: %s\n\n", data)
+	flusher.Flush()
+
+	ticker := time.NewTicker(800 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-ticker.C:
+			st := s.sim.GetState()
+			data, err := json.Marshal(st)
+			if err != nil {
+				fmt.Fprintf(w, "event: error\ndata: marshal failed\n\n")
+				flusher.Flush()
+				continue
+			}
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
+		}
+	}
+}
