@@ -10,9 +10,21 @@ const path = require('path');
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
+  body: path.join(__dirname, '../yennefer-observatory/src/components/mutations'),
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
+
+// Fallback logic for journal path (specifically when running on GitHub CI/Sandbox where /home/yenn/ does not exist or lacks permissions)
+if (!fs.existsSync(path.dirname(PATHS.journal))) {
+  try {
+    fs.mkdirSync(path.dirname(PATHS.journal), { recursive: true });
+  } catch (err) {
+    PATHS.journal = path.join(__dirname, '../logs/genesis_journal.jsonl');
+    if (!fs.existsSync(path.dirname(PATHS.journal))) {
+      fs.mkdirSync(path.dirname(PATHS.journal), { recursive: true });
+    }
+  }
+}
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -46,8 +58,14 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Generate a continuous dynamic landscape with traversable terrain and reactive dust physics" },
+      { type: "MUTATE", content: "Create a macro-scale makerspace workbench with realistic passive physics objects" },
     ];
-    const idx = Math.floor(Date.now() / 1000) % mutations.length;
+    // For Genie testing, always pick the environment generation prompts when FORCE_MUTATION is true
+    const isGenieSim = process.env.FORCE_MUTATION === 'true';
+    const idx = isGenieSim
+        ? Math.floor(Math.random() * 2) + (mutations.length - 2)
+        : Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
     
   } else if (coherence >= 90) {
@@ -154,49 +172,112 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const isGenieWorld = directive.includes("landscape") || directive.includes("makerspace");
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+  let geometry, material, importedDrei, customLogic, additionalMeshes;
+
+  if (isGenieWorld) {
+    if (directive.includes("landscape")) {
+      geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+      material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#3f6212"
+        roughness={0.8}
+        metalness={0.1}
+        wireframe={balance > 5}
+      />`;
+      customLogic = `
+      // Project Genie Landscape Simulation
+      const positions = meshRef.current.geometry.attributes.position;
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        const z = Math.sin(x * 2 + state.clock.elapsedTime) * 0.5 + Math.cos(y * 2 + state.clock.elapsedTime) * 0.5;
+        positions.setZ(i, z * Math.min(1, balance * 2));
+      }
+      positions.needsUpdate = true;
+      meshRef.current.rotation.x = -Math.PI / 2;
+      meshRef.current.rotation.z += 0.001;
+      `;
+      importedDrei = '';
+      additionalMeshes = '';
+    } else {
+      geometry = '<boxGeometry args={[4, 0.2, 4]} />';
+      material = `
+      <meshStandardMaterial
+        color="#854d0e"
+        roughness={0.6}
+        metalness={0.2}
+      />`;
+      customLogic = `
+      // Project Genie Physics Makerspace Simulation
+      meshRef.current.rotation.y += 0.005;
+      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
+      `;
+      additionalMeshes = `
+      <mesh position={[0, 0.5, 0]}>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial color="#ef4444" />
+      </mesh>
+      <mesh position={[1, 0.3, 1]}>
+        <sphereGeometry args={[0.3, 16, 16]} />
+        <meshStandardMaterial color="#3b82f6" />
+      </mesh>
+      `;
+      importedDrei = '';
+    }
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
 
-  const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
-  const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
+    const materials = [
+      `
+        <MeshDistortMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          distort={0.3}
+          speed={2}
+        />`,
+      `
+        <MeshWobbleMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          factor={1}
+          speed={2}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[Math.floor(Math.random() * materials.length)];
+    const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
+    importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
+    customLogic = `
+      meshRef.current.rotation.y += 0.002
+      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
+      // Intensity scales with balance
+      const intensity = Math.min(1, balance * 10)
+      meshRef.current.scale.setScalar(1 + intensity * 0.2)
+    `;
+    additionalMeshes = '';
+  }
 
   return `// Auto-generated by Yennefer Genesis Cycle
 // Directive: ${directive}
@@ -211,19 +292,18 @@ export default function ${name}({ balance = 0 }) {
   
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
-      // Intensity scales with balance
-      const intensity = Math.min(1, balance * 10)
-      meshRef.current.scale.setScalar(1 + intensity * 0.2)
+      ${customLogic}
     }
   })
 
   return (
-    <mesh ref={meshRef} position={[0, 0, 0]}>
-      ${geometry}
-      ${material}
-    </mesh>
+    <group position={[0, -1, 0]}>
+      <mesh ref={meshRef}>
+        ${geometry}
+        ${material}
+      </mesh>
+      ${additionalMeshes}
+    </group>
   )
 }
 `;
