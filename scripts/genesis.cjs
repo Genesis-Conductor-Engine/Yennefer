@@ -10,9 +10,15 @@ const path = require('path');
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  body: path.join(__dirname, '../yennefer-observatory/src/components/mutations'),
+  journal: path.join(__dirname, '../logs/genesis_journal.jsonl')
 };
+
+// Ensure logs directory exists
+const logDir = path.dirname(PATHS.journal);
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
 // --- CONFIGURATION ---
 const CONFIG = {
