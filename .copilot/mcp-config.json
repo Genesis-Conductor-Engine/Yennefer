@@ -2,7 +2,7 @@
   "mcpServers": {
     "diamond-vault": {
       "command": "python3",
-      "args": ["/home/diamondnode/Yennefer/scripts/diamond_vault_mcp_server.py"],
+      "args": ["/home/diamondnode/Yennefer/genesis-q-mem/qmcp_admin_panel.py"],
       "env": {
         "PYTHONUNBUFFERED": "1",
         "JAX_PLATFORM_NAME": "gpu",
@@ -11,7 +11,7 @@
     },
     "yennefer-consciousness": {
       "command": "python3",
-      "args": ["/home/diamondnode/Yennefer/genesis-q-mem/yennefer_mcp_server.py"]
+      "args": ["/home/diamondnode/Yennefer/genesis-q-mem/qmcp_system.py"]
     },
     "yennefer-mcp-lite": {
       "command": "python3",
@@ -23,7 +23,7 @@
     },
     "genesis-remote": {
       "command": "python3",
-      "args": ["/home/diamondnode/Yennefer/genesis-q-mem/genesis_remote_mcp.py"],
+      "args": ["/home/diamondnode/Yennefer/genesis-q-mem/qmcp_remote_uplink.py"],
       "env": {
         "REMOTE_URL": "http://localhost:8318"
       }
@@ -39,6 +39,10 @@
       "type": "remote",
       "url": "https://gc-mcp-beta.iholt.workers.dev/mcp",
       "timeout": 30000
+    },
+    "chatgpt-mcp-http": {
+      "command": "python3",
+      "args": ["/home/diamondnode/Yennefer/scripts/chatgpt_mcp_http_server.py"]
     }
   }
 }
