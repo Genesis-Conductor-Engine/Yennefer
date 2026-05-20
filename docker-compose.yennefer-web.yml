@@ -1,0 +1,156 @@
+# Yennefer with Web Integration - Docker Compose
+# Adds web chatbot interface to the Yennefer stack
+# Usage: docker compose -f docker-compose.yennefer-web.yml up -d
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # YENNEFER CORE SERVICES (from original stack)
+  # ============================================================
+  
+  yennefer-daemon:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.soul-api
+    image: ghcr.io/genesis-conductor-engine/yennefer/yennefer-daemon:latest
+    container_name: yennefer-daemon
+    command: ["python3", "genesis-q-mem/yennefer_daemon.py"]
+    volumes:
+      - shared-memory:/dev/shm
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MONITORING_MODE=simulated
+    restart: unless-stopped
+    networks:
+      - yennefer-net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import json; json.load(open('/dev/shm/yennefer_soul_state.json'))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  soul-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.soul-api
+    image: ghcr.io/genesis-conductor-engine/yennefer/soul-api:latest
+    container_name: yennefer-soul-api
+    ports:
+      - "8088:8088"
+    volumes:
+      - shared-memory:/dev/shm
+      - ./genesis-q-mem:/app/genesis-q-mem:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOUL_STATE_PATH=/dev/shm/yennefer_soul_state.json
+    depends_on:
+      yennefer-daemon:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - yennefer-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # CHAT API EXTENSION (New)
+  # ============================================================
+  
+  chat-api:
+    build:
+      context: .
+      dockerfile: genesis-q-mem/Dockerfile.chat-extension
+    image: yennefer-chat-api:latest
+    container_name: yennefer-chat-api
+    ports:
+      - "8089:8089"
+    volumes:
+      - shared-memory:/dev/shm
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SOUL_STATE_PATH=/dev/shm/yennefer_soul_state.json
+      - CHAT_API_PORT=8089
+    depends_on:
+      yennefer-daemon:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - yennefer-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # WEB INTEGRATION (New)
+  # ============================================================
+  
+  web-integration:
+    build:
+      context: ./web-integration
+      dockerfile: Dockerfile
+    image: yennefer-web-integration:latest
+    container_name: yennefer-web-integration
+    ports:
+      - "8000:8000"
+    environment:
+      - YENNEFER_SOUL_API_URL=http://soul-api:8088
+      - YENNEFER_WS_API_URL=ws://soul-api:8088/ws/soul
+      - WEB_PORT=8000
+      - DEBUG=false
+    depends_on:
+      soul-api:
+        condition: service_healthy
+      chat-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - yennefer-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # CLOUDFLARE TUNNEL (Optional)
+  # ============================================================
+  
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: yennefer-cloudflared
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./.cloudflared:/etc/cloudflared:ro
+    restart: unless-stopped
+    networks:
+      - yennefer-net
+    depends_on:
+      web-integration:
+        condition: service_healthy
+      soul-api:
+        condition: service_healthy
+      chat-api:
+        condition: service_healthy
+
+# ============================================================
+# NETWORKS & VOLUMES
+# ============================================================
+
+networks:
+  yennefer-net:
+    driver: bridge
+    name: yennefer-network
+
+volumes:
+  shared-memory:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=512m

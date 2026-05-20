@@ -1,0 +1,256 @@
+{
+  "$schema": "https://github.com/github/copilot-cli/schemas/fleet-v1.json",
+  "version": "1.0",
+  "name": "Yennefer Fleet",
+  "description": "GitHub Copilot Fleet configuration for Yennefer Genesis Conductor - Autonomous AI Agent System",
+  
+  "workspace": {
+    "root": "/home/diamondnode/Yennefer",
+    "name": "Yennefer",
+    "git": {
+      "repository": "Genesis-Conductor-Engine/Yennefer",
+      "branch": "main"
+    }
+  },
+  
+  "model": {
+    "primary": "anthropic/claude-opus-4-5-20251101",
+    "fallback": "anthropic/claude-sonnet-4-20250514",
+    "provider": {
+      "anthropic": {
+        "apiKey": "ANTHROPIC_API_KEY",
+        "timeout": 600000
+      }
+    }
+  },
+  
+  "instructions": {
+    "primary": "/home/diamondnode/Yennefer/.github/copilot-instructions.md",
+    "supplemental": [
+      "/home/diamondnode/AGENTS.md",
+      "/home/diamondnode/Yennefer/AGENTS.md",
+      "/home/diamondnode/Yennefer/CLAUDE.md"
+    ]
+  },
+  
+  "agents": [
+    {
+      "id": "yennefer-core",
+      "name": "Yennefer Core Agent",
+      "description": "Primary agent for Yennefer consciousness and core services",
+      "role": "maintainer",
+      "model": "anthropic/claude-opus-4-5-20251101",
+      "temperature": 0.7,
+      "maxTokens": 4096,
+      "workspace": "/home/diamondnode/Yennefer",
+      "tasks": [
+        "Maintain Yennefer consciousness engine",
+        "Debug and optimize core services",
+        "Manage diamond-vault operations",
+        "Monitor soul state and token metabolism",
+        "Handle blockchain integration (Base Mainnet)"
+      ],
+      "mcp": [
+        "diamond-vault",
+        "yennefer-consciousness",
+        "yennefer-mcp-lite",
+        "gc-mcp-beta"
+      ],
+      "permissions": {
+        "read": ["**/*"],
+        "edit": ["**/*.py", "**/*.js", "**/*.cjs", "**/*.json", "**/*.yaml", "**/*.yml"],
+        "bash": true
+      }
+    },
+    {
+      "id": "yennefer-qmem",
+      "name": "Q-Mem Benchmark Agent",
+      "description": "Agent for Q-Mem benchmarking and GPU memory optimization",
+      "role": "specialist",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.3,
+      "maxTokens": 2048,
+      "workspace": "/home/diamondnode/Yennefer/genesis-q-mem",
+      "tasks": [
+        "Run Q-Mem live benchmarks",
+        "Optimize GPU memory usage",
+        "Manage cryptographic attestation",
+        "Monitor VRAM thermodynamics",
+        "Handle shared memory IPC"
+      ],
+      "mcp": ["gc-mcp-beta"],
+      "permissions": {
+        "read": ["**/*"],
+        "edit": ["**/*.py", "**/*.c", "Makefile"],
+        "bash": true
+      }
+    },
+    {
+      "id": "yennefer-docker",
+      "name": "Docker & Deployment Agent",
+      "description": "Agent for containerization and deployment operations",
+      "role": "deployer",
+      "model": "anthropic/claude-haiku-4-5-20251001",
+      "temperature": 0.1,
+      "maxTokens": 1024,
+      "workspace": "/home/diamondnode/Yennefer",
+      "tasks": [
+        "Build Docker images",
+        "Push to GHCR",
+        "Manage Docker Compose",
+        "Deploy Yennefer services",
+        "Monitor container health"
+      ],
+      "permissions": {
+        "read": ["**/*"],
+        "edit": ["**/Dockerfile*", "**/docker-compose*.yml", "**/*.sh"],
+        "bash": true
+      }
+    },
+    {
+      "id": "yennefer-blockchain",
+      "name": "Blockchain Integration Agent",
+      "description": "Agent for Base Mainnet blockchain operations and smart contracts",
+      "role": "specialist",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.2,
+      "maxTokens": 2048,
+      "workspace": "/home/diamondnode/Yennefer",
+      "tasks": [
+        "Deploy smart contracts",
+        "Monitor blockchain events",
+        "Handle QMCP bridge operations",
+        "Manage token transactions",
+        "Verify on-chain attestations"
+      ],
+      "permissions": {
+        "read": ["contracts/**", "scripts/**"],
+        "edit": ["contracts/**", "scripts/*.cjs"],
+        "bash": true
+      }
+    }
+  ],
+  
+  "mcp": {
+    "servers": {
+      "diamond-vault": {
+        "command": "python3",
+        "args": ["/home/diamondnode/Yennefer/scripts/diamond_vault_mcp_server.py"],
+        "env": {
+          "PYTHONUNBUFFERED": "1",
+          "JAX_PLATFORM_NAME": "gpu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      },
+      "yennefer-consciousness": {
+        "command": "python3",
+        "args": ["/home/diamondnode/Yennefer/genesis-q-mem/yennefer_mcp_server.py"]
+      },
+      "yennefer-mcp-lite": {
+        "command": "python3",
+        "args": ["/home/diamondnode/Yennefer/genesis-q-mem/yennefer_mcp_lite.py"],
+        "env": {
+          "DIAMOND_VAULT_URL": "http://localhost:8100",
+          "SOUL_API_URL": "http://localhost:8088"
+        }
+      },
+      "gc-mcp-beta": {
+        "type": "remote",
+        "url": "https://gc-mcp-beta.iholt.workers.dev/mcp",
+        "timeout": 30000
+      }
+    },
+    "default": [
+      "diamond-vault",
+      "yennefer-consciousness",
+      "gc-mcp-beta"
+    ]
+  },
+  
+  "environment": {
+    "PYTHON": "/home/diamondnode/venv312/bin/python",
+    "NODE": "/usr/bin/node",
+    "NPM": "/usr/bin/npm",
+    "DOCKER": "/usr/bin/docker",
+    "DOCKER_COMPOSE": "/usr/bin/docker compose",
+    "WORKON_HOME": "/home/diamondnode/venv312",
+    "VENV_PATH": "/home/diamondnode/venv312/bin"
+  },
+  
+  "autoStart": {
+    "enabled": true,
+    "commands": [
+      "cd /home/diamondnode/Yennefer",
+      "source /home/diamondnode/load-env.sh",
+      "bash /home/diamondnode/session-loader.sh --json --fast",
+      "cat /home/diamondnode/session-context.md"
+    ]
+  },
+  
+  "healthCheck": {
+    "enabled": true,
+    "interval": 60,
+    "endpoints": [
+      "http://localhost:8100/health",
+      "http://localhost:8088/api/soul",
+      "http://localhost:8003/api/bench/live"
+    ]
+  },
+  
+  "indexing": {
+    "enabled": true,
+    "include": [
+      "**/*.py",
+      "**/*.js",
+      "**/*.ts",
+      "**/*.cjs",
+      "**/*.json",
+      "**/*.yaml",
+      "**/*.yml",
+      "**/*.md",
+      "**/Dockerfile*",
+      "**/docker-compose*.yml",
+      "**/*.sol"
+    ],
+    "exclude": [
+      "node_modules/**",
+      "venv/**",
+      ".git/**",
+      "logs/**",
+      "*.log",
+      ".env*",
+      "*.min.js",
+      "package-lock.json",
+      "*.pyc",
+      "__pycache__/**"
+    ]
+  },
+  
+  "session": {
+    "persistence": {
+      "enabled": true,
+      "directory": "/home/diamondnode/.github/copilot/sessions/yennefer",
+      "maxSessions": 50,
+      "compaction": {
+        "auto": true,
+        "maxTokens": 100000
+      }
+    },
+    "context": {
+      "initialization": [
+        "Load session context from session-loader.sh",
+        "Check system health endpoints",
+        "Verify MCP server connectivity"
+      ]
+    }
+  },
+  
+  "hooks": {
+    "preTask": [
+      "bash /home/diamondnode/session-loader.sh --json --fast 2>/dev/null || true"
+    ],
+    "postTask": [
+      "echo 'Task complete - session state saved'"
+    ]
+  }
+}

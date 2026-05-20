@@ -1,0 +1,31 @@
+# Yennefer Chat API Extension Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.chat.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.chat.txt
+
+# Copy application code
+COPY soul_api_chat_extension.py .
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Expose port
+EXPOSE 8089
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8089/health || exit 1
+
+# Run the application
+CMD ["python", "soul_api_chat_extension.py"]
