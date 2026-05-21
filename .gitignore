@@ -33,3 +33,7 @@ gha-creds-*.json
 # --- Build output ---
 frontend/build/
 node_modules/
+
+# A2A run logs + caches (ephemeral)
+out/
+.yennefer-cache/

@@ -1,12 +1,26 @@
 require('@nomicfoundation/hardhat-toolbox');
+require('@nomicfoundation/hardhat-ledger');
 require('dotenv').config();
 
-// SAFETY CHECK: If PRIVATE_KEY is not in .env, use a placeholder that forces a prompt
-const PRIVATE_KEY = process.env.ETH_PRIVATE_KEY || 'YOUR_PRIVATE_KEY_HERE';
+// Hot key (legacy signer). Only used while sweeping assets out during rotation.
+// Provided at runtime via env; never inlined. Invalid/placeholder -> no account
+// (prevents hardhat load errors and accidental use of a junk key).
+const RAW_KEY = process.env.ETH_PRIVATE_KEY || process.env.BASE_PRIVATE_KEY || '';
+const HOT_ACCOUNTS = /^0x[0-9a-fA-F]{64}$/.test(RAW_KEY) ? [RAW_KEY] : [];
+
+// Rotation target: the Ledger hardware account that replaces the hot key.
+// Set LEDGER_ACCOUNT=0x... to enable hardware signing for that address.
+const LEDGER_ACCOUNTS = /^0x[0-9a-fA-F]{40}$/.test(process.env.LEDGER_ACCOUNT || '')
+  ? [process.env.LEDGER_ACCOUNT]
+  : [];
+
+// Secrets moved out of source. Rotate the previously-committed keys.
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
+const BASE_MAINNET_RPC = process.env.BASE_MAINNET_RPC || process.env.BASE_RPC_URL || 'https://mainnet.base.org';
 
 module.exports = {
   etherscan: {
-    apiKey: 'F5TARHYEZGKAMV51WCIB281CZEXTNP27F2',
+    apiKey: ETHERSCAN_API_KEY,
   },
   sourcify: {
     enabled: false,
@@ -19,13 +33,15 @@ module.exports = {
   },
   networks: {
     baseSepolia: {
-      url: 'https://sepolia.base.org',
-      accounts: [PRIVATE_KEY],
+      url: process.env.BASE_SEPOLIA_RPC || 'https://sepolia.base.org',
+      accounts: HOT_ACCOUNTS,
+      ledgerAccounts: LEDGER_ACCOUNTS,
       chainId: 84532,
     },
     baseMainnet: {
-      url: 'https://base-mainnet.g.alchemy.com/v2/pvAdcefmwvLOK41KxWwmC',
-      accounts: [PRIVATE_KEY],
+      url: BASE_MAINNET_RPC,
+      accounts: HOT_ACCOUNTS,
+      ledgerAccounts: LEDGER_ACCOUNTS,
       chainId: 8453,
     },
   },
