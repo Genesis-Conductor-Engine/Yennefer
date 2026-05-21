@@ -23,6 +23,7 @@
     "@openzeppelin/contracts": "^5.4.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@safe-global/api-kit": "^4.1.0",
     "ai": "^6.0.39",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
