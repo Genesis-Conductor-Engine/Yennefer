@@ -1,0 +1,44 @@
+# eis-immutable-sink.patch
+# Adds the immutable-treasurySink hardening to EulersIdentitySynthesis.
+# NOTE: the canonical EIS contract was absent from this repo at patch time, so this
+# is a NEW-FILE template diff. Reconcile with the real implementation before deploy.
+# Apply with:  git apply patches/eis-immutable-sink.patch
+
+diff --git a/contracts/EulersIdentitySynthesis.sol b/contracts/EulersIdentitySynthesis.sol
+new file mode 100644
+index 00000000..0ac38cec
+--- /dev/null
++++ b/contracts/EulersIdentitySynthesis.sol
+@@ -0,0 +1,32 @@
++// SPDX-License-Identifier: MIT
++pragma solidity ^0.8.24;
++
++// ============================================================================
++// TEMPLATE PATCH — the canonical EulersIdentitySynthesis contract was NOT present
++// in this repo at patch time. This file encodes ONLY the requested treasurySink
++// hardening pattern. Reconcile it with the real EIS implementation before deploy;
++// do not deploy this template as-is.
++// ============================================================================
++
++/// @title EulersIdentitySynthesis (treasurySink hardening)
++contract EulersIdentitySynthesis {
++    /// @notice Immutable treasury sink (a Gnosis Safe). Bound once at construction.
++    address public immutable treasurySink;
++
++    /// @notice Emitted once when the sink is bound at deploy time.
++    event TreasurySinkBound(address indexed sink, uint256 chainId, bytes32 codehash);
++
++    constructor(address sink) {
++        _assertSafe(sink);
++        treasurySink = sink;
++        bytes32 codehash;
++        assembly { codehash := extcodehash(sink) }
++        emit TreasurySinkBound(sink, block.chainid, codehash);
++    }
++
++    /// @dev Reverts unless `sink` is a contract (a Safe), never an EOA.
++    function _assertSafe(address sink) internal view {
++        require(sink != address(0), "EIS: zero sink");
++        require(sink.code.length > 0, "EIS: sink not a contract (must be Safe)");
++    }
++}
