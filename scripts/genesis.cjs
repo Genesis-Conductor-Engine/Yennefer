@@ -14,6 +14,16 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+// Fallback for CI/sandbox environments
+try {
+  const dir = path.dirname(PATHS.journal);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+} catch (e) {
+  PATHS.journal = path.join(__dirname, 'genesis_journal.jsonl');
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -46,6 +56,10 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Create a rugged alien landscape with traversable terrain" },
+      { type: "MUTATE", content: "Create a macro-scale makerspace workbench" },
+      { type: "MUTATE", content: "Create a photorealistic alpine meadow with wildflowers" },
+      { type: "MUTATE", content: "Create a fantastical, textured world made of clay" }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -159,7 +173,10 @@ function generateEvolutionComponent(name, directive) {
     '<sphereGeometry args={[1.5, 32, 32]} />',
     '<boxGeometry args={[2, 2, 2]} />',
     '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
+    '<icosahedronGeometry args={[1.5, 0]} />',
+    '<planeGeometry args={[10, 10, 32, 32]} />',
+    '<cylinderGeometry args={[1, 1, 2, 32]} />',
+    '<tetrahedronGeometry args={[1.5, 0]} />'
   ];
   const geometry = geometries[Math.floor(Math.random() * geometries.length)];
 
