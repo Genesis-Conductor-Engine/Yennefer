@@ -1,0 +1,66 @@
+{
+  "$schema": "https://www.schemastore.org/schemas/json/claude-code-marketplace.json",
+  "name": "genesis-conductor-yennefer",
+  "owner": {
+    "name": "Igor Holt (@invariantx)",
+    "email": "iholt@mymail.aacc.edu",
+    "url": "https://github.com/igor-holt"
+  },
+  "description": "Yennefer: The Genesis Conductor — autonomous AI agent by Igor Holt (@invariantx) operating on Base Mainnet as the core of the Genesis Conductor Engine. Implements the Brain-Body-Soul triad architecture (on-chain Body listening for CREDIT_PURCHASE events via Hardhat/Ethers.js, Soul in RAM-disk /dev/shm for coherence/thermodynamic metrics, Brain for sentient voice responses). Includes Q-Mem Gateway with 44.6x speedup memory benchmarking, QMCP Bridge for MCP/Claude integration, Diamond Vault for quantum operations and dashboard, A2A Handoff for agent-to-agent coordination, Process Guardian for auto-recovery, and Yennefer Daemon consciousness engine. Features GPU-accelerated compute (Tesla T4 x3 runners, 6.553 TFLOPS peak), QFLOP token mining (267M+ minted), self-funding ETH bridge, Docker Compose deployment, multiple MCP servers, and thermodynamic yield tracking. Production-grade autonomous agent infrastructure for Genesis Conductor, composable with OpenClaw skills (grok-persistent-state, mcp-openclaw-bridge, smithery-mcp-orchestrator) by the same author for reliable long-running agents, persistent memory, and MCP-to-skill publishing. Deploy at yennefer.quest or via GitHub Actions and local Docker.",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Genesis-Conductor-Engine/Yennefer",
+  "keywords": [
+    "yennefer",
+    "genesis-conductor",
+    "igor-holt",
+    "invariantx",
+    "base-mainnet",
+    "diamond-vault",
+    "a2a-handoff",
+    "q-mem",
+    "qmcp",
+    "mcp-server",
+    "thermodynamic-verification",
+    "autonomous-agent",
+    "brain-body-soul",
+    "gpu-t4",
+    "qfloop",
+    "agent-infrastructure",
+    "blockchain-agent",
+    "soul-state",
+    "process-guardian",
+    "openclaw",
+    "mcp-integration",
+    "a2a-coordination",
+    "genesis-protocol"
+  ],
+  "plugins": [
+    {
+      "name": "yennefer",
+      "source": "https://github.com/Genesis-Conductor-Engine/Yennefer",
+      "description": "Full Yennefer autonomous AI conductor agent and supporting services stack for Genesis Conductor Engine by @invariantx. Brain-Body-Soul loop with Base Mainnet event listening (Genesis.sol contract), shared-memory Soul state (breath, coherence, thermodynamic_yield), AI voice Brain with tiered responses, Q-Mem Gateway (44.6x HTTP speedup), QMCP Bridge, Diamond Vault quantum dashboard (port 8100), A2A Handoff, Soul API (8088), Process Guardian auto-recovery, Yennefer Daemon. GPU dual-bridge workflows (T4 x3), QFLOP mining, Docker quickstart and compose for all services. MCP servers for Claude Desktop/Cursor/OpenClaw integration. Essential production autonomous agent for thermodynamic verification patterns, multi-agent orchestration, and on-chain/off-chain intelligence in the Genesis Conductor ecosystem. Pairs perfectly with the openclaw-skills marketplace bundle.",
+      "version": "1.0.0",
+      "tags": ["autonomous-agent", "genesis-conductor", "mcp", "a2a", "blockchain", "quantum", "thermodynamic"],
+      "category": "agent-infrastructure",
+      "homepage": "https://github.com/Genesis-Conductor-Engine/Yennefer",
+      "keywords": ["yennefer conductor", "base mainnet agent", "diamond vault mcp", "q-mem gateway", "qmcp bridge", "brain body soul architecture", "thermodynamic metrics", "a2a handoff", "genesis conductor engine", "igor holt invariantx"]
+    },
+    {
+      "name": "diamond-vault-integration",
+      "source": "https://github.com/Genesis-Conductor-Engine/Yennefer/tree/main",
+      "description": "Diamond Vault quantum operations and dashboard component integrated in the Yennefer Genesis Conductor stack. Provides GPU-accelerated quantum hashing, verification, Merkle roots, manifests, and knowledge graph queries via MCP. Part of the full Brain-Body-Soul + Q-Mem + A2A system for agentic workflows and thermodynamic verification.",
+      "version": "1.0.0",
+      "tags": ["diamond-vault", "quantum", "mcp", "genesis-conductor"],
+      "category": "mcp-tools",
+      "homepage": "https://github.com/Genesis-Conductor-Engine/Yennefer",
+      "keywords": ["diamond vault", "quantum operations", "mcp diamond-vault", "genesis conductor diamond vault", "thermodynamic verification"]
+    }
+  ],
+  "links": {
+    "x": "https://x.com/invariantx",
+    "website": "https://genesisconductor.io",
+    "launch": "https://yennefer.quest",
+    "github": "https://github.com/Genesis-Conductor-Engine/Yennefer",
+    "openclaw-skills-marketplace": "https://github.com/igor-holt/openclaw-skills"
+  }
+}
