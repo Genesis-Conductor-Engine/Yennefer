@@ -14,6 +14,18 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+function writeJournal(entryStr) {
+  try {
+    fs.appendFileSync(PATHS.journal, entryStr);
+  } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'EACCES') {
+      fs.appendFileSync(path.join(__dirname, 'genesis_journal.jsonl'), entryStr);
+    } else {
+      throw e;
+    }
+  }
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -46,6 +58,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Build an interactive alpine meadow with wildflowers" },
+      { type: "MUTATE", content: "Generate a rugged alien landscape with traversable terrain" },
+      { type: "MUTATE", content: "Create a macro-scale makerspace workbench" }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +109,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(JSON.stringify(entry) + "\n");
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +161,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(JSON.stringify(mutationLog) + "\n");
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,14 +169,25 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  let geometry;
+  const lowerDirective = directive.toLowerCase();
+
+  if (lowerDirective.includes('meadow')) {
+    geometry = '<planeGeometry args={[10, 10]} />';
+  } else if (lowerDirective.includes('makerspace')) {
+    geometry = '<boxGeometry args={[3, 3, 3]} />';
+  } else if (lowerDirective.includes('alien')) {
+    geometry = '<sphereGeometry args={[2, 32, 32]} />';
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  }
 
   const materials = [
     `
@@ -278,7 +304,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(JSON.stringify(errorLog) + "\n");
   }
 }
 
