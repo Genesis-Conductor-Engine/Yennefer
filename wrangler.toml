@@ -20,10 +20,6 @@ command = "cd frontend && npm install --include=dev && GENERATE_SOURCEMAP=false 
 directory = "frontend/build"
 binding   = "ASSETS"
 
-# ─── Placement ───────────────────────────────────────────────────────────────
-[placement]
-mode = "smart"
-
 # ─── Production environment (yennefer.quest) ─────────────────────────────────
 # BACKEND_URL is set as a Cloudflare Worker secret (not a plain var) so it
 # stays encrypted and is never committed to source:
