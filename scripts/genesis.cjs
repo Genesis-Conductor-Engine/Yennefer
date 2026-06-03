@@ -14,6 +14,21 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+// Helper function with fallback for writing to journal
+function safeAppendToJournal(entry) {
+  const content = JSON.stringify(entry) + "\n";
+  try {
+    fs.appendFileSync(PATHS.journal, content);
+  } catch (err) {
+    if (err.code === 'ENOENT' || err.code === 'EACCES') {
+      const fallbackPath = path.join(__dirname, 'genesis_journal.jsonl');
+      fs.appendFileSync(fallbackPath, content);
+    } else {
+      throw err;
+    }
+  }
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -94,7 +109,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    safeAppendToJournal(entry);
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +161,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    safeAppendToJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,17 +169,70 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  // Extract keywords for Project Genie simulation
+  const lowercaseDirective = directive.toLowerCase();
+  let geometry = '';
 
-  const materials = [
-    `
+  if (lowercaseDirective.includes('box') || lowercaseDirective.includes('cube')) {
+    geometry = '<boxGeometry args={[2, 2, 2]} />';
+  } else if (lowercaseDirective.includes('plane') || lowercaseDirective.includes('landscape') || lowercaseDirective.includes('surface')) {
+    geometry = '<planeGeometry args={[5, 5, 32, 32]} />\n      <meshStandardMaterial wireframe={true} color="#4ade80" />';
+  } else if (lowercaseDirective.includes('fractal') || lowercaseDirective.includes('crystal')) {
+    geometry = '<octahedronGeometry args={[1.5, 0]} />';
+  } else if (lowercaseDirective.includes('aura') || lowercaseDirective.includes('sphere')) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  } else if (lowercaseDirective.includes('holographic') || lowercaseDirective.includes('stream')) {
+    geometry = '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />';
+  } else {
+    // Random fallback
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  }
+
+  // Choose material if not already included in geometry string
+  let material = '';
+  if (!geometry.includes('Material')) {
+    if (lowercaseDirective.includes('crystal') || lowercaseDirective.includes('fractal')) {
+      material = `
+      <MeshDistortMaterial
+        color="#8b5cf6"
+        emissive="#4c1d95"
+        emissiveIntensity={0.5 + balance * 2}
+        roughness={0.1}
+        metalness={0.9}
+        distort={0.2}
+        speed={1}
+      />`;
+    } else if (lowercaseDirective.includes('aura') || lowercaseDirective.includes('energy')) {
+      material = `
+      <MeshWobbleMaterial
+        color="#06b6d4"
+        emissive="#0e7490"
+        emissiveIntensity={1 + balance * 2}
+        roughness={0.2}
+        metalness={0.8}
+        factor={1.5}
+        speed={3}
+      />`;
+    } else if (lowercaseDirective.includes('holographic')) {
+      material = `
+      <meshStandardMaterial
+        color="#38bdf8"
+        emissive="#0284c7"
+        emissiveIntensity={0.8 + balance}
+        wireframe={true}
+        transparent={true}
+        opacity={0.7}
+      />`;
+    } else {
+      const materials = [
+        `
       <MeshDistortMaterial
         color="#8b5cf6"
         emissive="#4c1d95"
@@ -174,7 +242,7 @@ function generateEvolutionComponent(name, directive) {
         distort={0.3}
         speed={2}
       />`,
-    `
+        `
       <MeshWobbleMaterial
         color="#06b6d4"
         emissive="#0e7490"
@@ -184,7 +252,7 @@ function generateEvolutionComponent(name, directive) {
         factor={1}
         speed={2}
       />`,
-    `
+        `
       <meshStandardMaterial
         color="#fbbf24"
         emissive="#92400e"
@@ -192,8 +260,10 @@ function generateEvolutionComponent(name, directive) {
         roughness={0.2}
         metalness={0.8}
       />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+      ];
+      material = materials[Math.floor(Math.random() * materials.length)];
+    }
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -278,7 +348,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    safeAppendToJournal(errorLog);
   }
 }
 
