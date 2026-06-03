@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 # Installs frontend deps and builds the SPA so frontend/build exists before
 # `wrangler deploy` uploads assets.  NODE_OPTIONS is required for
 # react-scripts 5.x + Node 18+ (webpack 4 OpenSSL 3.0 compatibility).
-command = "cd frontend && npm install --include=dev && GENERATE_SOURCEMAP=false CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build"
+command = "cd frontend && npm install --include=dev typescript@^5.0.0 && GENERATE_SOURCEMAP=false CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build"
 
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
 # Built by `npm run build` (root package.json) before every `wrangler deploy`.
