@@ -46,6 +46,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Environment: A photorealistic alpine meadow with wildflowers. Among the evergreen pine trees is a rustic log cabin with a front porch. A split-rail fence meanders near the cabin. In the background there are three jagged mountain peaks covered in snow. Character: A shiba inu centered in the frame, angled like a 3rd person video game, with highly responsive controls." },
+      { type: "MUTATE", content: "Environment: A rugged alien landscape with traversable terrain and reactive dust physics. Character: A vintage roadster with high-speed off-road handling." },
+      { type: "MUTATE", content: "Environment: This is a macro-scale makerspace workbench. The ground is a vast, polished light-brown wood table with realistic grain and friction. The surface is scattered with passive physics objects: a white cardboard car, a soft-serve ice cream cone, a cubic puzzle, and alphabet blocks. These objects are distinct from the player character. The background is a soft-focus workshop with a pegboard of tools and a sunlit window. The lighting creates a sharp shadow beneath the central box to visually ground it. Omnidirectional traversal is possible across the wooden plain. Character: The user controls a featureless, rectangular cardboard box with two fat squat legs and no arms or face. The character is capable of a heavy, grounded walk and vertical jumping. The camera follows the box's movement closely, keeping the character centered. The character moves with a stop-motion aesthetic, pressing into the wood surface without sliding. The action command triggers a 'Head-Butt,' where the rectangular torso lunges forward to shove objects with kinetic force. The character is a solid physical object." },
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +97,15 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    } catch (e) {
+      if (e.code === 'ENOENT' || e.code === 'EACCES') {
+        fs.appendFileSync(path.join(__dirname, 'genesis_journal.jsonl'), JSON.stringify(entry) + "\n");
+      } else {
+        throw e;
+      }
+    }
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +157,15 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    } catch (e) {
+      if (e.code === 'ENOENT' || e.code === 'EACCES') {
+        fs.appendFileSync(path.join(__dirname, 'genesis_journal.jsonl'), JSON.stringify(mutationLog) + "\n");
+      } else {
+        throw e;
+      }
+    }
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -278,7 +297,13 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    try {
+      fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    } catch (err) {
+      if (err.code === 'ENOENT' || err.code === 'EACCES') {
+        fs.appendFileSync(path.join(__dirname, 'genesis_journal.jsonl'), JSON.stringify(errorLog) + "\n");
+      }
+    }
   }
 }
 
