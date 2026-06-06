@@ -362,3 +362,57 @@ async def _decompose_task(self, task: SwarmTask):
 - **Cost Calculator:** https://swarm.yennefer.quest/calculator
 - **Status Page:** https://status.yennefer.quest
 - **Discord:** https://discord.gg/yennefer-swarm
+
+## QFLOP / Blockchain Activities and Revenue Recovery
+
+### Revenue Recovery Backfill
+
+`qflop-backfill` (the 25-wallet aggressive Base L2 wrap consumer / orchestrator) has been integrated into the diamondnode PM2 ecosystem (under **BLOCKCHAIN SERVICES**) alongside `qflop-miner`, bridges, and related services.
+
+It executes `~/Yennefer/qflop-backfill/orchestrator/backfill_orchestrator.mjs` (with A2N, `TelemetryAggregator` to billing-worker, wallet derivation from `BACKFILL_MASTER_MNEMONIC` using BIP44 paths for the 25 HD wallets).
+
+**Keep-alive / auto-recovery:** Registered with full PM2 settings (autorestart, `min_uptime: '10s'`, `restart_delay: 5000`, dedicated logs under `qflop-backfill/logs/`) and added to `process-guardian` `CRITICAL_SERVICES` list (alongside `qflop-miner`, `qflop-minter`, `yennefer_conductor`, etc.) for continuous operation and auto-correction.
+
+**A2N (Agent-to-Notion) telemetry bridge:** On startup the orchestrator auto-initializes the hourly Notion comment sync (if `NOTION_API_TOKEN` + `BACKFILL_NOTION_PAGE_ID` present from `~/.env` via `source ~/load-env.sh`). Uses `a2a/a2n_bridge.mjs` to post recovery stats (active wallets, recovery %, total wraps, revenue vs target) as comments to the dedicated backfill Notion page. This closes the produce (miners) and consume (backfill wraps and fees) and meter (Stripe and D1) and report (Notion/A2A) loop.
+
+Ties directly to the existing **A2A handoff / swarm delegation** (the `genesis-q-mem/a2a_handoff_server.py` MCP-compatible service enabling Claude agents to interact with the Yennefer conductor) and the overall conductor/monetization story.
+
+#### Launch / Management Commands (on diamondnode)
+
+```bash
+# Load env (NOTION keys, BACKFILL_MASTER_MNEMONIC, Stripe, RPC, etc. for snapshot)
+source ~/load-env.sh
+
+# (Re)start via the central ecosystem.config.cjs (recommended for keep-alive)
+pm2 start ~/Yennefer/ecosystem.config.cjs --only qflop-backfill
+# or the full set: pm2 start ~/Yennefer/ecosystem.config.cjs
+
+pm2 save
+pm2 logs qflop-backfill --lines 50
+```
+
+**Secure Notion key transfer** (typically run from Mac side to populate keys):
+
+```bash
+# On Mac (export real values first)
+export NOTION_API_TOKEN="ntn_YourRealToken"
+export BACKFILL_NOTION_PAGE_ID="4bea432f-c5f7-490a-8867-a34fdd8281dd"
+bash ~/Yennefer/qflop-backfill/scripts/secure_transfer_notion_key.sh
+```
+
+Then on diamondnode: `source ~/load-env.sh; pm2 restart qflop-backfill`
+
+**Provision step for funding the 25 HD wallets:**
+
+```bash
+cd ~/Yennefer/qflop-backfill
+source ~/load-env.sh || true
+MIN_WALLET_ETH=0.003 node scripts/provision-and-check.mjs
+# Fund any listed shortfalls on Base L2 from cold wallet; re-run until all OK
+```
+
+See `~/Yennefer/qflop-backfill/LAUNCH.md` (ops, status, balances, npm run pm2:*), `pm2 list`, `pm2 restart qflop-backfill`, and `process-guardian` for auto-recovery details.
+
+Cross-references: `docs/SWARM_LAUNCH_COMPLETE.md` (monetization layer and Stripe), `docs/SWARM_API.md`, `genesis-q-mem/a2a_handoff_server.py` (A2A delegation), and backfill `a2a/a2n_bridge.mjs` + `orchestrator/` for the telemetry cycle.
+
+Enables operators and the swarm (via MCP/Claude delegation or A2A) to manage/monitor the full QFLOP produce and aggressive recovery and reporting loop as an always-on diamondnode blockchain activity.
