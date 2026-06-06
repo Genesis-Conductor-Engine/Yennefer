@@ -35,9 +35,11 @@ const CONFIG = {
     MAX_RESTART_RATE: 10,  // per minute
     
     // Critical services (order matters for dependencies)
+    // QFLOP services included for keep-alive/auto-recovery: qflop-backfill (Base L2 revenue recovery consumer), qflop-miner, qflop-minter
     CRITICAL_SERVICES: [
         'diamond-watchdog',
         'qmcp-bridge',
+        'qflop-backfill',
         'qflop-miner',
         'qflop-minter',
         'yennefer_conductor'
@@ -278,7 +280,7 @@ class ProcessGuardian {
         const failures = [];
         
         try {
-            // Check gas balance from miner logs
+            // Check gas balance from miner logs (qflop-miner primary; qflop-backfill now also in CRITICAL_SERVICES for full QFLOP keep-alive)
             const logs = execSync(
                 'npx pm2 logs qflop-miner --lines 10 --nostream 2>&1 | grep -i "gas" | tail -1',
                 { encoding: 'utf-8' }
@@ -400,6 +402,7 @@ class ProcessGuardian {
         const serviceConfigs = {
             'diamond-watchdog': 'npx pm2 start genesis-q-mem/qmcp_diamond_watchdog.py --name diamond-watchdog --interpreter python3',
             'qflop-miner': 'npx pm2 start scripts/qflop_mining_daemon.cjs --name qflop-miner',
+            'qflop-backfill': 'npx pm2 start qflop-backfill/orchestrator/backfill_orchestrator.mjs --name qflop-backfill --interpreter node --interpreter-args --experimental-vm-modules',
             'qmcp-bridge': 'npx pm2 start scripts/qmcp_bridge.cjs --name qmcp-bridge'
         };
         
