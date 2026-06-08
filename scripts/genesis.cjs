@@ -14,6 +14,19 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+function appendToJournalSafe(data) {
+  try {
+    fs.appendFileSync(PATHS.journal, data);
+  } catch (err) {
+    if (err.code === 'ENOENT' || err.code === 'EACCES') {
+      const fallbackPath = path.join(__dirname, 'genesis_journal.jsonl');
+      fs.appendFileSync(fallbackPath, data);
+    } else {
+      throw err;
+    }
+  }
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -42,6 +55,8 @@ async function consultTheVisionary(state) {
   if (process.env.FORCE_MUTATION === 'true' || revenue >= CONFIG.mutationThreshold) {
     // Rich state - evolve visually
     const mutations = [
+      { type: "MUTATE", content: "Generate an interactive procedural 3D landscape with rolling terrain" },
+      { type: "MUTATE", content: "Construct a dynamic makerspace with interconnected virtual mechanisms" },
       { type: "MUTATE", content: "Create a pulsing golden aura that intensifies with each transaction" },
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
@@ -94,7 +109,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    appendToJournalSafe(JSON.stringify(entry) + "\n");
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +161,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    appendToJournalSafe(JSON.stringify(mutationLog) + "\n");
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,49 +169,58 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const dirLower = directive.toLowerCase();
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
+  let geometry;
+  if (dirLower.includes("landscape") || dirLower.includes("terrain")) {
+    geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+  } else if (dirLower.includes("makerspace") || dirLower.includes("mechanism")) {
+    geometry = '<boxGeometry args={[3, 3, 3]} />';
+  } else if (dirLower.includes("aura") || dirLower.includes("sphere")) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  } else if (dirLower.includes("fractal") || dirLower.includes("crystalline")) {
+    geometry = '<octahedronGeometry args={[1.5, 0]} />';
+  } else {
+    geometry = '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />';
+  }
+
+  let material;
+  if (dirLower.includes("landscape") || dirLower.includes("terrain")) {
+    material = `
+      <meshStandardMaterial
+        color="#228b22"
+        wireframe={true}
+        roughness={0.8}
+        metalness={0.2}
+      />`;
+  } else if (dirLower.includes("makerspace") || dirLower.includes("mechanism")) {
+    material = `
+      <meshStandardMaterial
+        color="#888888"
+        roughness={0.5}
         metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+        wireframe={true}
+      />`;
+  } else if (dirLower.includes("aura") || dirLower.includes("sphere")) {
+    material = `
       <meshStandardMaterial
         color="#fbbf24"
         emissive="#92400e"
         emissiveIntensity={0.5 + balance * 2}
         roughness={0.2}
         metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
-
-  const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
-  const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
+      />`;
+  } else {
+    material = `
+      <meshStandardMaterial
+        color="#8b5cf6"
+        emissive="#4c1d95"
+        emissiveIntensity={0.5 + balance * 2}
+        roughness={0.2}
+        metalness={0.8}
+        wireframe={true}
+      />`;
+  }
 
   return `// Auto-generated by Yennefer Genesis Cycle
 // Directive: ${directive}
@@ -204,7 +228,6 @@ function generateEvolutionComponent(name, directive) {
 
 import React, { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-${importedDrei}
 
 export default function ${name}({ balance = 0 }) {
   const meshRef = useRef()
@@ -278,7 +301,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    appendToJournalSafe(JSON.stringify(errorLog) + "\n");
   }
 }
 
