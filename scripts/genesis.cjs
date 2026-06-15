@@ -21,6 +21,25 @@ const CONFIG = {
   reflectionInterval: 6 * 60 * 60 * 1000 // 6 hours
 };
 
+// --- LOGGING HELPER ---
+function writeJournal(entryOrLog) {
+  const line = JSON.stringify(entryOrLog) + "\n";
+  try {
+    fs.appendFileSync(PATHS.journal, line);
+  } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'EACCES') {
+      const fallbackPath = path.join(__dirname, 'genesis_journal.jsonl');
+      try {
+        fs.appendFileSync(fallbackPath, line);
+      } catch (fallbackError) {
+        console.error("   ⚠️ Failed to write to journal and fallback:", fallbackError.message);
+      }
+    } else {
+      console.error("   ⚠️ Unexpected error writing to journal:", e.message);
+    }
+  }
+}
+
 // --- THE TRI-MIND INTERFACES ---
 
 // 1. THE VISIONARY (Claude via local inference)
@@ -46,6 +65,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "an interactive landscape featuring a rugged alien terrain with reactive dust physics" },
+      { type: "MUTATE", content: "a macro-scale makerspace workbench with a polished light-brown wood table" },
+      { type: "MUTATE", content: "a photorealistic alpine meadow with wildflowers" }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +116,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(entry);
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +168,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,49 +176,78 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  let geometry = '';
+  let material = '';
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+  const directiveLower = directive.toLowerCase();
+
+  if (directiveLower.includes('landscape') || directiveLower.includes('terrain') || directiveLower.includes('meadow')) {
+    geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+    material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#4ade80"
+        roughness={0.8}
+        metalness={0.1}
+        wireframe={false}
+      />`;
+  } else if (directiveLower.includes('makerspace') || directiveLower.includes('workbench') || directiveLower.includes('wood')) {
+    geometry = '<boxGeometry args={[10, 0.5, 5]} />';
+    material = `
+      <meshStandardMaterial
+        color="#8b5a2b"
+        roughness={0.6}
+        metalness={0.1}
+      />`;
+  } else if (directiveLower.includes('box') || directiveLower.includes('cabin')) {
+    geometry = '<boxGeometry args={[2, 2, 2]} />';
+    material = `
+      <meshStandardMaterial
+        color="#8b5a2b"
+        roughness={0.9}
+        metalness={0.1}
+      />`;
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
 
-  const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
-  const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
+    const materials = [
+      `
+        <meshStandardMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[Math.floor(Math.random() * materials.length)];
+  }
+
+  // Ensure only intrinsic materials are used to avoid import errors.
+  const isDreiImportNeeded = false;
+  const importedDrei = '';
 
   return `// Auto-generated by Yennefer Genesis Cycle
 // Directive: ${directive}
@@ -278,7 +329,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(errorLog);
   }
 }
 
