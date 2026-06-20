@@ -14,6 +14,20 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+// Wrapper for journal writing that gracefully falls back
+function writeJournal(entryStr) {
+  try {
+    fs.appendFileSync(PATHS.journal, entryStr);
+  } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'EACCES') {
+      const fallbackPath = path.join(__dirname, 'genesis_journal.jsonl');
+      fs.appendFileSync(fallbackPath, entryStr);
+    } else {
+      throw e;
+    }
+  }
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -46,6 +60,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "A photorealistic alpine meadow with wildflowers. Among the evergreen pine trees is a rustic log cabin with a front porch. A split-rail fence meanders near the cabin. In the background there are three jagged mountain peaks covered in snow." },
+      { type: "MUTATE", content: "A rugged alien landscape with traversable terrain and reactive dust physics." },
+      { type: "MUTATE", content: "This is a macro-scale makerspace workbench. The ground is a vast, polished light-brown wood table with realistic grain and friction. The surface is scattered with passive physics objects: a white cardboard car, a soft-serve ice cream cone, a cubic puzzle, and alphabet blocks." }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +111,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(JSON.stringify(entry) + "\n");
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +163,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(JSON.stringify(mutationLog) + "\n");
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -278,7 +295,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(JSON.stringify(errorLog) + "\n");
   }
 }
 
