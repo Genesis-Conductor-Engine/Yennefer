@@ -14,6 +14,21 @@ const PATHS = {
   journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
+// Helper function to safely write to journal
+function writeJournal(entry) {
+  try {
+    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+  } catch (e) {
+    // Fallback if directory doesn't exist
+    const fallbackPath = path.join(__dirname, 'genesis_journal.jsonl');
+    try {
+      fs.appendFileSync(fallbackPath, JSON.stringify(entry) + "\n");
+    } catch (fallbackError) {
+      console.error(`   ⚠️ Failed to write journal entry to fallback path: ${fallbackError.message}`);
+    }
+  }
+}
+
 // --- CONFIGURATION ---
 const CONFIG = {
   fundingTarget: 10.0,
@@ -46,6 +61,10 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      // Project Genie inspired worlds
+      { type: "MUTATE", content: "Environment: A photorealistic alpine meadow with wildflowers. Among the evergreen pine trees is a rustic log cabin with a front porch. A split-rail fence meanders near the cabin. In the background there are three jagged mountain peaks covered in snow. Character: A shiba inu centered in the frame, angled like a 3rd person video game, with highly responsive controls." },
+      { type: "MUTATE", content: "Environment: A rugged alien landscape with traversable terrain and reactive dust physics. Character: A vintage roadster with high-speed off-road handling." },
+      { type: "MUTATE", content: "Environment: This is a macro-scale makerspace workbench. The ground is a vast, polished light-brown wood table with realistic grain and friction. The surface is scattered with passive physics objects: a white cardboard car, a soft-serve ice cream cone, a cubic puzzle, and alphabet blocks. These objects are distinct from the player character. The background is a soft-focus workshop with a pegboard of tools and a sunlit window. The lighting creates a sharp shadow beneath the central box to visually ground it. Omnidirectional traversal is possible across the wooden plain. Character: The user controls a featureless, rectangular cardboard box with two fat squat legs and no arms or face. The character is capable of a heavy, grounded walk and vertical jumping. The camera follows the box's movement closely, keeping the character centered. The character moves with a stop-motion aesthetic, pressing into the wood surface without sliding. The action command triggers a 'Head-Butt,' where the rectangular torso lunges forward to shove objects with kinetic force. The character is a solid physical object." }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +113,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(entry);
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +165,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,46 +173,81 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const directiveLower = directive.toLowerCase();
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+  let geometry;
+  if (directiveLower.includes('alien') || directiveLower.includes('mountain') || directiveLower.includes('alpine')) {
+    geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+  } else if (directiveLower.includes('box') || directiveLower.includes('makerspace') || directiveLower.includes('workbench')) {
+    geometry = '<boxGeometry args={[2, 2, 2]} />';
+  } else if (directiveLower.includes('sphere') || directiveLower.includes('orb')) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  }
+
+  let material;
+  if (directiveLower.includes('wood') || directiveLower.includes('makerspace')) {
+    material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#d2b48c"
+        roughness={0.6}
+        metalness={0.1}
+      />`;
+  } else if (directiveLower.includes('alien') || directiveLower.includes('dust')) {
+    material = `
+      <meshStandardMaterial
+        color="#c2b280"
+        roughness={0.9}
+        metalness={0.1}
+      />`;
+  } else if (directiveLower.includes('alpine') || directiveLower.includes('meadow')) {
+    material = `
+      <meshStandardMaterial
+        color="#4caf50"
+        roughness={0.8}
+        metalness={0.1}
+      />`;
+  } else {
+    const materials = [
+      `
+        <MeshDistortMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          distort={0.3}
+          speed={2}
+        />`,
+      `
+        <MeshWobbleMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          factor={1}
+          speed={2}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[Math.floor(Math.random() * materials.length)];
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -278,7 +332,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(errorLog);
   }
 }
 
