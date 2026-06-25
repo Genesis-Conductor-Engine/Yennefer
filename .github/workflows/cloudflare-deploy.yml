@@ -5,10 +5,10 @@ on:
     branches: [main]
     paths:
       - 'workers/**'
-      - 'frontend/src/**'
-      - 'frontend/public/**'
-      - 'frontend/package.json'
-      - 'frontend/package-lock.json'
+      - 'yennefer-observatory/src/**'
+      - 'yennefer-observatory/public/**'
+      - 'yennefer-observatory/package.json'
+      - 'yennefer-observatory/package-lock.json'
       - 'wrangler.toml'
       - '.github/workflows/cloudflare-deploy.yml'
   workflow_dispatch:
