@@ -11,7 +11,7 @@ const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -40,12 +40,14 @@ async function consultTheVisionary(state) {
   let directive;
   
   if (process.env.FORCE_MUTATION === 'true' || revenue >= CONFIG.mutationThreshold) {
-    // Rich state - evolve visually
+    // Rich state - evolve visually (Project Genie Integration)
     const mutations = [
       { type: "MUTATE", content: "Create a pulsing golden aura that intensifies with each transaction" },
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
-      { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
-      { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "A rugged alien landscape with traversable terrain and reactive dust physics." },
+      { type: "MUTATE", content: "A macro-scale makerspace workbench with realistic wood grain." },
+      { type: "MUTATE", content: "A photorealistic alpine meadow with wild flowers and evergreen trees." },
+      { type: "MUTATE", content: "A cozy library with an ever-expanding manor house interior." },
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -154,46 +156,85 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  let geometry;
+  let material;
+  const dirLower = directive.toLowerCase();
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+  // Procedural Project Genie Parsing
+  if (dirLower.includes('landscape') || dirLower.includes('meadow')) {
+    geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+    material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#2E8B57"
+        emissive="#006400"
+        emissiveIntensity={0.2 + balance}
+        roughness={0.8}
+        metalness={0.1}
+        wireframe={true}
+      />`;
+  } else if (dirLower.includes('makerspace')) {
+    geometry = '<boxGeometry args={[4, 0.5, 3]} />';
+    material = `
+      <meshStandardMaterial
+        color="#8B4513"
+        emissive="#A0522D"
+        emissiveIntensity={0.1 + balance}
+        roughness={0.6}
+        metalness={0.3}
+      />`;
+  } else if (dirLower.includes('library')) {
+    geometry = '<boxGeometry args={[1, 3, 0.5]} />';
+    material = `
+      <meshStandardMaterial
+        color="#4A3C31"
+        emissive="#5C4A3D"
+        emissiveIntensity={0.2 + balance}
+        roughness={0.7}
+        metalness={0.1}
+      />`;
+  } else {
+    // Fallback to random intrinsic selection for abstract mutations
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[Math.floor(Math.random() * geometries.length)];
+
+    const materials = [
+      `
+        <MeshDistortMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          distort={0.3}
+          speed={2}
+        />`,
+      `
+        <MeshWobbleMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          factor={1}
+          speed={2}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[Math.floor(Math.random() * materials.length)];
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
