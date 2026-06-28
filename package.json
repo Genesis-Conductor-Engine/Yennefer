@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "hardhat test",
-    "build": "echo 'No build step required'",
+    "build": "cd frontend && npm run build",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy --env production",
     "worker:deploy:staging": "wrangler deploy --env staging"
@@ -13,6 +13,7 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "dotenv": "^16.6.1",
     "hardhat": "^2.28.6",
+    "typescript": "^4.9.5",
     "wrangler": "^3.78.0"
   },
   "dependencies": {
