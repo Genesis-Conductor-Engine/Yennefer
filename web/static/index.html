@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Node - Unified Inference Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>💎 Diamond Node Unified Inference</h1>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span id="statusText">Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="dashboard-grid">
+            <!-- Chat Interface (Left Column) -->
+            <div class="panel chat-panel">
+                <div class="panel-header">
+                    <h2>🤖 Claude Orchestrator</h2>
+                </div>
+                <div class="panel-content">
+                    <div id="chatHistory" class="chat-history"></div>
+                    <div class="chat-input-container">
+                        <textarea 
+                            id="chatInput" 
+                            placeholder="Ask about wallet growth, QAOA optimization, or VRAM status..."
+                            maxlength="4096"
+                            rows="3"
+                        ></textarea>
+                        <button id="sendButton" class="send-button">
+                            <span id="sendButtonText">Send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stacked Panels (Right Column) -->
+            <div class="right-column">
+                <!-- VRAM Monitor -->
+                <div class="panel vram-panel">
+                    <div class="panel-header">
+                        <h2>⚡ VRAM Status</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="vram-gauge-container">
+                            <canvas id="vramGauge"></canvas>
+                        </div>
+                        <div class="vram-metrics">
+                            <div class="metric">
+                                <span class="metric-label">State:</span>
+                                <span class="metric-value" id="vramState">OPTIMAL</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Hamiltonian:</span>
+                                <span class="metric-value" id="hamiltonian">0.0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Usage:</span>
+                                <span class="metric-value" id="vramUsage">0 / 0 MB</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">GPU:</span>
+                                <span class="metric-value" id="gpuName">-</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Temp:</span>
+                                <span class="metric-value" id="gpuTemp">0°C</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Power:</span>
+                                <span class="metric-value" id="gpuPower">0.0W</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trends Panel -->
+                <div class="panel trends-panel">
+                    <div class="panel-header">
+                        <h2>📈 Metrics Trends</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="trends-chart-container">
+                            <canvas id="trendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Claw Integrations Panel -->
+                <div class="panel claws-panel">
+                    <div class="panel-header">
+                        <h2>🦅 Claw Integrations</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="claws-status-container">
+                            <div class="claw-status" id="claw-telegram">
+                                <span class="status-dot offline"></span>
+                                <span class="claw-name">Telegram</span>
+                            </div>
+                            <div class="claw-status" id="claw-kimiclaw">
+                                <span class="status-dot offline"></span>
+                                <span class="claw-name">KimiClaw</span>
+                            </div>
+                            <div class="claw-status" id="claw-openclaw">
+                                <span class="status-dot offline"></span>
+                                <span class="claw-name">OpenClaw</span>
+                            </div>
+                            <div class="claw-status" id="claw-slack">
+                                <span class="status-dot offline"></span>
+                                <span class="claw-name">Slack</span>
+                            </div>
+                        </div>
+                        
+                        <div class="propagation-container">
+                            <textarea id="propagateMessage" placeholder="Enter custom alert message to manually propagate..." rows="2"></textarea>
+                            <button id="propagateButton" class="action-button">Propagate to Claws</button>
+                            <div id="propagationResult" class="propagation-result"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tool Execution Log -->
+                <div class="panel tools-panel">
+                    <div class="panel-header">
+                        <h2>🛠️ Tool Execution Log</h2>
+                        <button id="clearToolsButton" class="clear-button">Clear</button>
+                    </div>
+                    <div class="panel-content">
+                        <div id="toolLog" class="tool-log"></div>
+                    </div>
+                </div>
+
+                <!-- Blockchain & Metrics -->
+                <div class="panel metrics-panel">
+                    <div class="panel-header">
+                        <h2>📊 System Metrics</h2>
+                    </div>
+                    <div class="panel-content">
+                        <div class="metrics-grid">
+                            <div class="metric-card blockchain-card">
+                                <h3>🪙 Blockchain</h3>
+                                <div id="blockchainMetrics">
+                                    <p class="metric-item">Balance: <span id="walletBalance">-</span></p>
+                                    <p class="metric-item">Gas Price: <span id="gasPrice">-</span></p>
+                                    <p class="metric-item">Risk Score: <span id="riskScore">-</span></p>
+                                </div>
+                            </div>
+                            <div class="metric-card qaoa-card">
+                                <h3>⚛️ QAOA</h3>
+                                <div id="qaoaMetrics">
+                                    <p class="metric-item">Energy: <span id="qaoaEnergy">-</span></p>
+                                    <p class="metric-item">Purity: <span id="qaoaPurity">-</span></p>
+                                    <p class="metric-item">Convergence: <span id="qaoaConvergence">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

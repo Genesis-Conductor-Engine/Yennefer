@@ -1,0 +1,18 @@
+[Unit]
+Description=Yennefer Hourly Thermodynamic Telemetry Emitter
+After=network.target
+
+[Service]
+Type=simple
+User=diamondnode
+WorkingDirectory=/home/diamondnode/diamondnode-unified-inference
+Environment="PATH=/usr/bin:/usr/local/bin"
+EnvironmentFile=-/etc/default/yennefer-telemetry
+ExecStart=/usr/bin/python3 workers/yennefer_telemetry_daemon.py
+Restart=always
+RestartSec=60
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

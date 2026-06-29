@@ -1,0 +1,81 @@
+{
+  "envelope_version": "0.3.0",
+  "nox_engine": {
+    "mode": "kobayashi_maru",
+    "crystalline_threshold": 0.85,
+    "reframe_enabled": true,
+    "structural_lock": false,
+    "description": "NOX engine configuration for MARU runtime with crystalline emergence detection"
+  },
+  "maru_guard": {
+    "active": true,
+    "epsilon_hysteresis": {
+      "enabled": true,
+      "gamma_buffer": 0.05,
+      "min_hold_cycles": 3,
+      "description": "Epsilon hysteresis prevents oscillation at VRAM boundaries"
+    },
+    "description": "MARU guardian protects against VRAM overflow on constrained hardware"
+  },
+  "hardware": {
+    "gpu": "GTX_1650_4GB",
+    "vram_total_mb": 4096,
+    "vram_partition": {
+      "jax": 0.45,
+      "cuda_q": 0.55,
+      "description": "45% JAX (hyperNEAT/qmem) | 55% CUDA-Q (multilane electron state)"
+    },
+    "vram_ceilings_mb": {
+      "jax": 1800,
+      "cuda_q": 2200,
+      "buffer": 96,
+      "description": "Enforced VRAM ceilings with 96MB buffer for system overhead"
+    }
+  },
+  "interleaved_bus": {
+    "enabled": true,
+    "protocol_version": "1.0",
+    "yield_priority": [
+      "hyperneat_pulsing",
+      "qmem_active"
+    ],
+    "throttle_rules": {
+      "jax_throttle_threshold": 0.42,
+      "cuda_q_yield_on_priority": true
+    },
+    "description": "Interleaved execution bus prevents VRAM conflicts between JAX and CUDA-Q"
+  },
+  "proof_schema": {
+    "kobayashi_maru_proof": {
+      "type": "crystalline_convergence",
+      "conditions": [
+        "H(s) < crystalline_threshold for min_hold_cycles",
+        "epsilon_hysteresis prevents premature crystallization",
+        "structural_lock=false allows NOX engine adaptations"
+      ],
+      "verification": "proof_verifier.py validates crystalline state transitions"
+    },
+    "vram_partition_proof": {
+      "type": "hamiltonian_balance",
+      "invariant": "sum(jax_vram, cuda_q_vram) <= 4096 - buffer",
+      "enforcement": "vram_guardian.py enforces ceilings with grace period",
+      "violation_response": "NOX reframe on repeated violations"
+    }
+  },
+  "hyperneat": {
+    "pulsing": false,
+    "pulse_interval_ms": 100,
+    "description": "hyperNEAT pulsing state (runtime-updated)"
+  },
+  "qmem": {
+    "active": false,
+    "lock_file": "/var/maru/qmem.lock",
+    "description": "Quantum memory active state (runtime-updated)"
+  },
+  "reframe_events": [],
+  "metadata": {
+    "created_at": "2025-01-01T00:00:00Z",
+    "template_version": "0.3.0",
+    "description": "MARU runtime NOX engine state template"
+  }
+}

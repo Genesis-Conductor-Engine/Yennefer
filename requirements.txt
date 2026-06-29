@@ -1,0 +1,41 @@
+# Core AI/ML
+anthropic>=0.101.0
+langsmith>=0.8.3
+openai>=1.0.0
+
+# Web Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+websockets>=13.0
+httpx>=0.28.0
+
+# Blockchain
+web3>=7.0.0
+
+# Quantum (CUDA-Q via system install, not pip)
+# Note: CUDA-Q installed separately via apt/conda
+
+# Monitoring
+opentelemetry-api>=1.27.0
+opentelemetry-sdk>=1.27.0
+opentelemetry-exporter-otlp>=1.27.0
+
+# Data Processing
+numpy>=2.0.0
+pandas>=2.2.0
+pyyaml>=6.0
+notion-client>=2.0.0
+
+# ML Models
+# xinference[all]>=0.16.0  # Blocked by xoscar bug
+xllamacpp>=2026.5.9093
+ctransformers>=0.2.27
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.12.0
+orjson>=3.11.0
+
+# Bot Protection & Rate Limiting
+slowapi>=0.1.9
+python-multipart>=0.0.9

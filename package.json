@@ -1,0 +1,61 @@
+{
+  "name": "diamondnode-unified-inference",
+  "version": "1.0.0",
+  "description": "Unified ML inference system with Claude Opus orchestration, CUDA-Q quantum optimization, and blockchain analytics",
+  "main": "server.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "build": "echo \"No build step required\"",
+    "deploy:web-ui": "python web/ui/web_ui.py",
+    "deploy:mcp-apps": "python web/mcp-apps/mcp_yolo_server.py"
+  },
+  "keywords": [
+    "ai",
+    "ml",
+    "quantum",
+    "blockchain",
+    "claude",
+    "yolo",
+    "cuda-q",
+    "mcp",
+    "inference"
+  ],
+  "author": "Diamond Node Team",
+  "license": "MIT",
+  "dependencies": {
+    "trtc-sdk-v5": "^5.17.1",
+    "@vercel/analytics": "^2.0.1",
+    "@modelcontextprotocol/ext-apps": "^1.7.1",
+    "@opentelemetry/sdk-node": "^0.55.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-node": "^1.28.0",
+    "@opentelemetry/sdk-metrics": "^1.28.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.55.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.55.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.53.0",
+    "@opentelemetry/semantic-conventions": "^1.28.0",
+    "@opentelemetry/resources": "^1.28.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.90.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/diamondnode-unified-inference.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/diamondnode-unified-inference/issues"
+  },
+  "homepage": "https://github.com/your-org/diamondnode-unified-inference#readme"
+}

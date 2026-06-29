@@ -1,0 +1,286 @@
+{
+  "CRYSTALLINE State": {
+    "validation_result": {
+      "state": "CRYSTALLINE",
+      "timestamp": "2026-05-20T00:05:43.211877+00:00",
+      "evaluation_summary": {
+        "topological_score": 1.0,
+        "hardware_compliance": true,
+        "pi_validity": true,
+        "invariant_violations": [],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "03e6de8b959e1a87968105baa79924854db60a731a4709af041e3c2e47c179bf",
+          "perturbation_magnitude": 0.01,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 1.0,
+          "dimension_match": true,
+          "symmetry_preserved": true,
+          "conservation_violations": []
+        },
+        "hardware_grounding": {
+          "vram_utilization": 0.000244140625,
+          "vram_fits": true,
+          "thermal_margin": 20.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": true,
+          "execution_safe": true,
+          "state_transition_legal": true,
+          "permission_violations": []
+        }
+      },
+      "recommendations": {
+        "action": "COMMIT",
+        "rationale": "Payload meets all validation criteria",
+        "next_steps": [
+          "Execute payload in production pipeline"
+        ]
+      }
+    }
+  },
+  "NULL State (VRAM Overflow)": {
+    "validation_result": {
+      "state": "NULL",
+      "timestamp": "2026-05-20T00:05:43.219208+00:00",
+      "evaluation_summary": {
+        "topological_score": 1.0,
+        "hardware_compliance": false,
+        "pi_validity": true,
+        "invariant_violations": [],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "b46cf9656a1a20b3a2276a0edd386de9eda214d8c9ccdbd9a97dded138db9b4a",
+          "perturbation_magnitude": 0.0,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 1.0,
+          "dimension_match": true,
+          "symmetry_preserved": true,
+          "conservation_violations": []
+        },
+        "hardware_grounding": {
+          "vram_utilization": 2.3283064365386963,
+          "vram_fits": false,
+          "thermal_margin": 6.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": true,
+          "execution_safe": true,
+          "state_transition_legal": true,
+          "permission_violations": []
+        }
+      },
+      "recommendations": {
+        "action": "REJECT",
+        "rationale": "Critical validation failures detected",
+        "next_steps": [
+          "Trigger Generator restart with corrected constraints",
+          "Enforce stricter VRAM budgets"
+        ]
+      }
+    }
+  },
+  "NULL State (Invariant Failure)": {
+    "validation_result": {
+      "state": "NULL",
+      "timestamp": "2026-05-20T00:05:43.233288+00:00",
+      "evaluation_summary": {
+        "topological_score": 0.43333333333333335,
+        "hardware_compliance": true,
+        "pi_validity": true,
+        "invariant_violations": [
+          "Conservation law violated: energy",
+          "Conservation law violated: information",
+          "Dimensional mismatch detected"
+        ],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "0bf690252c99fb8b542415489de8666c3b0347b439ee6572e608dec8b0624d27",
+          "perturbation_magnitude": 0.0,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 0.43333333333333335,
+          "dimension_match": false,
+          "symmetry_preserved": true,
+          "conservation_violations": [
+            "Conservation law violated: energy",
+            "Conservation law violated: information",
+            "Dimensional mismatch detected"
+          ]
+        },
+        "hardware_grounding": {
+          "vram_utilization": 6.103515625e-05,
+          "vram_fits": true,
+          "thermal_margin": 32.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": true,
+          "execution_safe": true,
+          "state_transition_legal": true,
+          "permission_violations": []
+        }
+      },
+      "recommendations": {
+        "action": "REJECT",
+        "rationale": "Critical validation failures detected",
+        "next_steps": [
+          "Trigger Generator restart with corrected constraints"
+        ]
+      }
+    }
+  },
+  "PI Scope Violation": {
+    "validation_result": {
+      "state": "NULL",
+      "timestamp": "2026-05-20T00:05:43.255141+00:00",
+      "evaluation_summary": {
+        "topological_score": 0.6,
+        "hardware_compliance": true,
+        "pi_validity": false,
+        "invariant_violations": [],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "5a19f011ce0654b644e21c6776df5e277978c9545c76bbe847ca2a638b6007f1",
+          "perturbation_magnitude": 0.0,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 0.6,
+          "dimension_match": true,
+          "symmetry_preserved": true,
+          "conservation_violations": []
+        },
+        "hardware_grounding": {
+          "vram_utilization": 6.103515625e-05,
+          "vram_fits": true,
+          "thermal_margin": 32.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": false,
+          "execution_safe": false,
+          "state_transition_legal": false,
+          "permission_violations": [
+            "Operation not in PI scope: write",
+            "Resource limit exceeded: max_threads > 512",
+            "Invalid state transition: unauthorized"
+          ]
+        }
+      },
+      "recommendations": {
+        "action": "REJECT",
+        "rationale": "Critical validation failures detected",
+        "next_steps": [
+          "Trigger Generator restart with corrected constraints",
+          "Verify PI scope boundaries"
+        ]
+      }
+    }
+  },
+  "Convenience Function": {
+    "validation_result": {
+      "state": "CRYSTALLINE",
+      "timestamp": "2026-05-20T00:05:43.262217+00:00",
+      "evaluation_summary": {
+        "topological_score": 1.0,
+        "hardware_compliance": true,
+        "pi_validity": true,
+        "invariant_violations": [],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "09c2bbe3853b324e4766b710b719316a21e948b79655387695b571bd7627cb7d",
+          "perturbation_magnitude": 0.0,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 1.0,
+          "dimension_match": true,
+          "symmetry_preserved": true,
+          "conservation_violations": []
+        },
+        "hardware_grounding": {
+          "vram_utilization": 6.103515625e-05,
+          "vram_fits": true,
+          "thermal_margin": 28.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": true,
+          "execution_safe": true,
+          "state_transition_legal": true,
+          "permission_violations": []
+        }
+      },
+      "recommendations": {
+        "action": "COMMIT",
+        "rationale": "Payload meets all validation criteria",
+        "next_steps": [
+          "Execute payload in production pipeline"
+        ]
+      }
+    }
+  },
+  "Seismic Scan": {
+    "validation_result": {
+      "state": "DUCTILE",
+      "timestamp": "2026-05-20T00:05:43.269382+00:00",
+      "evaluation_summary": {
+        "topological_score": 0.6,
+        "hardware_compliance": true,
+        "pi_validity": true,
+        "invariant_violations": [],
+        "corrections_required": []
+      },
+      "detailed_analysis": {
+        "seismic_scan": {
+          "topology_hash": "2c8f9103c4a46ac4d7f636ba24a5ca3811287b9511cba04dc7b5be5c0eff7d0d",
+          "perturbation_magnitude": 0.26925824035672524,
+          "structural_integrity": true
+        },
+        "topological_validation": {
+          "invariant_score": 0.6,
+          "dimension_match": true,
+          "symmetry_preserved": true,
+          "conservation_violations": []
+        },
+        "hardware_grounding": {
+          "vram_utilization": 6.103515625e-05,
+          "vram_fits": true,
+          "thermal_margin": 24.599999999999994,
+          "hardware_compatible": true
+        },
+        "operational_authority": {
+          "pi_scope_valid": true,
+          "execution_safe": true,
+          "state_transition_legal": true,
+          "permission_violations": []
+        }
+      },
+      "recommendations": {
+        "action": "CORRECT_AND_RETRY",
+        "rationale": "Payload acceptable with corrections: topological refinement needed",
+        "next_steps": [
+          "Apply invariant corrections"
+        ]
+      }
+    }
+  }
+}

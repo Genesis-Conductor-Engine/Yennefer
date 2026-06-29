@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>NOX Agentic Engine Control Panel</title>
+    <style>
+        :root {
+            --bg-color: #0A0E27;
+            --card-bg: #151B3B;
+            --accent-color: #00D4FF;
+            --text-color: #FFFFFF;
+            --secondary-text: #B0BCCF;
+            --danger-color: #FF4D4D;
+            --success-color: #00E676;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            margin: 0 15px;
+            accent-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-active { background-color: var(--success-color); color: #000; }
+        .status-idle { background-color: var(--secondary-text); color: #000; }
+
+        .viz-container {
+            height: 100px;
+            background: linear-gradient(90deg, rgba(0,212,255,0.1) 0%, rgba(0,212,255,0.02) 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: var(--accent-color);
+            opacity: 0.3;
+            transition: height 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>💎 NOX ENGINE</h1>
+            <span id="engine-status" class="status-badge status-idle">IDLE</span>
+        </div>
+        
+        <div class="grid">
+            <div class="metric">
+                <span class="metric-label">η Thermo (Rate)</span>
+                <span id="eta-thermo-val" class="metric-value">0.85</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Kernel Lanes</span>
+                <span id="kernel-lanes-val" class="metric-value">4</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Electron Potentiation</span>
+                <span id="electron-val" class="metric-value">0.42</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">QMEM Usage</span>
+                <span id="qmem-val" class="metric-value">12.5%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>CONTROLS</h2>
+        <div class="controls">
+            <div class="control-group">
+                <span class="metric-label">Target η Thermo</span>
+                <input type="range" id="eta-slider" min="0" max="100" value="85">
+                <span id="slider-val">0.85</span>
+            </div>
+            <div class="control-group">
+                <span class="metric-label">Multilane Kernel</span>
+                <button id="toggle-multilane">ACTIVATE</button>
+            </div>
+            <div class="control-group">
+                <span class="metric-label">Post-Quantum Encryption</span>
+                <button id="toggle-encryption">ENABLE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <span class="metric-label">Electron State Potentiation Visualization</span>
+        <div class="viz-container">
+            <div id="wave-viz" class="wave"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        /*__EXT_APPS_BUNDLE__*/
+        const { App } = globalThis.ExtApps;
+
+        let state = {
+            eta_thermo: 0.85,
+            multilane_active: false,
+            encryption_enabled: false,
+            kernel_lanes: 4
+        };
+
+        const app = new App({ name: "NoxControlPanel", version: "1.0.0" }, {});
+
+        app.ontoolresult = ({ content }) => {
+            const result = JSON.parse(content[0].text);
+            updateUI(result);
+        };
+
+        async function updateUI(newState) {
+            if (!newState) return;
+            state = { ...state, ...newState };
+
+            document.getElementById('eta-thermo-val').textContent = state.eta_thermo.toFixed(2);
+            document.getElementById('kernel-lanes-val').textContent = state.kernel_lanes;
+            document.getElementById('electron-val').textContent = state.electron_state_potentiation?.toFixed(3) || "0.000";
+            document.getElementById('qmem-val').textContent = `${state.qmem_usage_pct.toFixed(1)}%`;
+            
+            const statusBadge = document.getElementById('engine-status');
+            statusBadge.textContent = state.status;
+            statusBadge.className = `status-badge ${state.status === 'ACTIVE' ? 'status-active' : 'status-idle'}`;
+
+            document.getElementById('wave-viz').style.height = `${(state.electron_state_potentiation || 0.5) * 100}%`;
+            
+            document.getElementById('toggle-multilane').textContent = state.multilane_active ? "DEACTIVATE" : "ACTIVATE";
+            document.getElementById('toggle-encryption').textContent = state.encryption_enabled ? "DISABLE" : "ENABLE";
+        }
+
+        document.getElementById('eta-slider').addEventListener('input', (e) => {
+            const val = e.target.value / 100;
+            document.getElementById('slider-val').textContent = val.toFixed(2);
+        });
+
+        document.getElementById('eta-slider').addEventListener('change', async (e) => {
+            const val = e.target.value / 100;
+            await sendUpdate({ eta_thermo: val });
+        });
+
+        document.getElementById('toggle-multilane').addEventListener('click', async () => {
+            await sendUpdate({ multilane_active: !state.multilane_active });
+        });
+
+        document.getElementById('toggle-encryption').addEventListener('click', async () => {
+            await sendUpdate({ encryption_enabled: !state.encryption_enabled });
+        });
+
+        async function sendUpdate(updates) {
+            const newConfig = { ...state, ...updates };
+            // Inject a message back to Claude to update the configuration
+            app.sendMessage({
+                role: "user",
+                content: [{ 
+                    type: "text", 
+                    text: `Update NOX configuration: ${JSON.stringify(updates)}` 
+                }]
+            });
+            
+            // Also call the tool directly for immediate effect
+            await app.callServerTool("configure_nox_engine", updates);
+        }
+
+        await app.connect();
+
+        // Initial state fetch
+        const initialState = await app.callServerTool("get_nox_state", {});
+        if (initialState && initialState.content) {
+            updateUI(JSON.parse(initialState.content[0].text));
+        }
+
+        // Periodic update
+        setInterval(async () => {
+            const currentState = await app.callServerTool("get_nox_state", {});
+            if (currentState && currentState.content) {
+                updateUI(JSON.parse(currentState.content[0].text));
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

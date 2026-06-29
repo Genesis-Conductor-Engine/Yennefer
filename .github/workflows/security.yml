@@ -1,0 +1,22 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run pip-audit
+      run: |
+        pip install pip-audit
+        pip-audit -r requirements.txt
+    
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate

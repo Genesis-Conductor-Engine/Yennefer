@@ -1,0 +1,12 @@
+Diamond Node Unified Inference System
+Copyright 2026 Diamond Node Team
+
+This product includes software developed by:
+- Anthropic (Claude API, Anthropic SDK)
+- NVIDIA (CUDA-Q)
+- Ultralytics (YOLO11)
+- Model Context Protocol community
+- FastAPI contributors
+- OpenTelemetry contributors
+
+Third-party licenses can be found in THIRD_PARTY_LICENSES.md

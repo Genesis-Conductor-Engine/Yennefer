@@ -1,0 +1,41 @@
+envelope_version: "0.3.0"
+
+maru_guardian:
+  poll_interval_minutes: 15
+  notion_db: "9a32dcb5-00b6-40d7-bd86-43d93965fa82"
+  lookback_hours: 24
+  
+  thresholds:
+    crystalline_min: 0.85
+    hysteresis_compliance_min: 0.90
+    vram_jax_warn: 0.42
+    vram_jax_critical: 0.45
+    vram_cuda_q_warn: 0.52
+    vram_cuda_q_critical: 0.55
+  
+  reframe:
+    enabled: true
+    cooldown_minutes: 60
+    max_reframes_per_hour: 3
+    structural_lock_duration_seconds: 30
+  
+  crystalline_weights:
+    hysteresis: 0.4
+    vram: 0.3
+    bus_health: 0.2
+    sanitization: 0.1
+
+logging:
+  level: INFO
+  file: /var/log/maru_guardian.log
+  format: "%(asctime)s [%(levelname)s] %(message)s"
+
+audit:
+  enabled: true
+  directory: /var/maru/audit_logs
+  rotation_days: 30
+
+envelope:
+  version: "0.3.0"
+  capsule_directory: /var/maru/reframe_events
+  proof_schema_required: true

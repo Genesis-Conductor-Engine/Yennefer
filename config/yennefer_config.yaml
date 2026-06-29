@@ -1,0 +1,26 @@
+envelope_version: "0.3.0"
+
+yennefer:
+  cadence_hours: 1
+  notion_db: "9a32dcb5-00b6-40d7-bd86-43d93965fa82"
+  notion_parent: "9553c94d-0590-43b8-8e80-a889c757ecad"
+  
+  hysteresis:
+    gamma_buffer: 0.05
+    min_hold_cycles: 3
+  
+  thermodynamic:
+    eta_thermo_max: 1.0
+    electron_sim_steps: 1000
+    quantum_delta_range: [0.01, 0.15]
+  
+  vram_thresholds:
+    jax_warn: 0.42
+    jax_critical: 0.45
+    cuda_q_warn: 0.52
+    cuda_q_critical: 0.55
+  
+  crystalline:
+    base_score: 0.75
+    vram_penalty_factor: 0.1
+    eta_bonus_factor: 0.2

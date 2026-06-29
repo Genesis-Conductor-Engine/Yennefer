@@ -1,0 +1,32 @@
+# diamondNode Maru MCP Integration
+# All Maru-related paths owned by Igor Holt
+
+# Core Maru infrastructure
+/deployment/maru_*.sh @igor-holt
+/deployment/*guardian* @igor-holt
+/deployment/*nox* @igor-holt
+/workers/yennefer* @igor-holt
+/workers/maru* @igor-holt
+
+# Telemetry and monitoring
+/workers/*telemetry* @igor-holt
+/workers/*thermodynamic* @igor-holt
+/config/yennefer_config.yaml @igor-holt
+/config/maru_config.yaml @igor-holt
+
+# Notion integration
+/workers/notion_sanitizer.py @igor-holt
+/workers/notion_workers/ @igor-holt
+
+# A2A event bus
+/src/orchestrator/*a2a* @igor-holt
+/src/orchestrator/*maru* @igor-holt
+
+# Documentation
+/docs/maru/ @igor-holt
+/docs/deployment/maru* @igor-holt
+/artifacts/diamondnode_maru_integration/ @igor-holt
+
+# diamondNode core (shared ownership)
+/src/ @diamond-node-team @igor-holt
+/deployment/ @diamond-node-team @igor-holt

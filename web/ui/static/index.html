@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VRAM Analytics Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0d0d0d, #1a1a2e);
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    #charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      width: 90%;
+      max-width: 1200px;
+      margin: 2rem 0;
+    }
+    .chart-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+    button {
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2563eb; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>VRAM Analytics Dashboard</header>
+  <div id="charts">
+    <div class="chart-card">
+      <canvas id="vramUsageChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <canvas id="tempChart"></canvas>
+    </div>
+  </div>
+  <div style="margin:1rem;">
+    <button id="triggerClaw">Propagate to Claws</button>
+  </div>
+  <script>
+    const ctxVram = document.getElementById('vramUsageChart').getContext('2d');
+    const ctxTemp = document.getElementById('tempChart').getContext('2d');
+    const vramChart = new Chart(ctxVram, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'VRAM Used (MiB)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.3 }] },
+      options: { responsive: true, plugins: { legend: { labels: { color: '#e0e0e0' } } }, scales: { x: { ticks: { color: '#e0e0e0' } }, y: { ticks: { color: '#e00e0' } } } }
+    });
+    const tempChart = new Chart(ctxTemp, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Temp (°C)', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.2)', tension: 0.3 }] },
+      options: { responsive: true, plugins: { legend: { labels: { color: '#e0e0e0' } } }, scales: { x: { ticks: { color: '#e0e0e0' } }, y: { ticks: { color: '#e0e0e0' } } } }
+    });
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/live-metrics`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type !== 'metrics_update') return;
+      const payload = data.data;
+      const time = new Date().toLocaleTimeString();
+      // VRAM chart
+      vramChart.data.labels.push(time);
+      vramChart.data.datasets[0].data.push(payload.vram_used_mib || 0);
+      if (vramChart.data.labels.length > 30) { vramChart.data.labels.shift(); vramChart.data.datasets[0].data.shift(); }
+      vramChart.update();
+      // Temp chart
+      tempChart.data.labels.push(time);
+      tempChart.data.datasets[0].data.push(payload.temperature_c || 0);
+      if (tempChart.data.labels.length > 30) { tempChart.data.labels.shift(); tempChart.data.datasets[0].data.shift(); }
+      tempChart.update();
+    };
+    ws.onclose = () => console.warn('WebSocket closed');
+    document.getElementById('triggerClaw').addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/propagate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'Manual propagation triggered by dashboard button' })
+        });
+        const json = await resp.json();
+        alert(`Claw propagation result: ${resp.status}\n${JSON.stringify(json)}`);
+      } catch(e) { alert('Error: '+e); }
+    });
+  </script>
+</body>
+</html>

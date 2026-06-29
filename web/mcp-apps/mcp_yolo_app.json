@@ -1,0 +1,287 @@
+{
+  "name": "yolo11-detection-app",
+  "version": "1.0.0",
+  "description": "Interactive YOLO11 object detection UI for Diamond Node MCP Server",
+  "type": "mcp-app",
+  "protocol": "2025-03-26",
+  "features": {
+    "interactive_ui": true,
+    "realtime_updates": true,
+    "tool_integration": true
+  },
+  "tools": [
+    {
+      "name": "run_yolo11_detection",
+      "display_name": "YOLO11 Object Detection",
+      "description": "Run YOLO11s object detection with interactive results viewer",
+      "ui_type": "embedded",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "image_path": {
+            "type": "string",
+            "title": "Image Path or URL",
+            "description": "Path to image file or base64-encoded image data"
+          },
+          "confidence_threshold": {
+            "type": "number",
+            "title": "Confidence Threshold",
+            "description": "Minimum confidence for detections (0.0-1.0)",
+            "default": 0.5,
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "batch_size": {
+            "type": "integer",
+            "title": "Batch Size",
+            "description": "Number of images to process in batch",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 8
+          }
+        },
+        "required": ["image_path"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "detections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "class": {"type": "string"},
+                "confidence": {"type": "number"},
+                "bbox": {
+                  "type": "array",
+                  "items": {"type": "number"},
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          },
+          "inference_time_ms": {"type": "number"},
+          "vram_used_mb": {"type": "number"},
+          "image_dimensions": {
+            "type": "object",
+            "properties": {
+              "width": {"type": "integer"},
+              "height": {"type": "integer"}
+            }
+          }
+        }
+      },
+      "ui_component": {
+        "type": "canvas",
+        "renderer": "bounding-box-overlay",
+        "features": [
+          "zoom",
+          "pan",
+          "confidence-filter",
+          "class-filter",
+          "export-results"
+        ]
+      }
+    },
+    {
+      "name": "query_vram_status",
+      "display_name": "VRAM Monitor",
+      "description": "Real-time GPU VRAM status with Hamiltonian visualization",
+      "ui_type": "dashboard",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "vram_used_mb": {"type": "number"},
+          "vram_total_mb": {"type": "number"},
+          "vram_percent": {"type": "number"},
+          "hamiltonian": {"type": "number"},
+          "state": {
+            "type": "string",
+            "enum": ["OPTIMAL", "DYNAMIC", "SEQUENTIAL", "OFFLOAD"]
+          },
+          "gpu_temp_c": {"type": "number"},
+          "gpu_power_w": {"type": "number"}
+        }
+      },
+      "ui_component": {
+        "type": "gauge",
+        "renderer": "circular-progress",
+        "thresholds": [
+          {"value": 5.0, "color": "green", "label": "OPTIMAL"},
+          {"value": 7.5, "color": "yellow", "label": "DYNAMIC"},
+          {"value": 8.5, "color": "orange", "label": "SEQUENTIAL"},
+          {"value": 10.0, "color": "red", "label": "OFFLOAD"}
+        ],
+        "auto_refresh": true,
+        "refresh_interval_ms": 5000
+      }
+    },
+    {
+      "name": "run_cuda_q_qaoa",
+      "display_name": "CUDA-Q QAOA Optimizer",
+      "description": "Quantum optimization with energy convergence visualization",
+      "ui_type": "chart",
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "energy_history": {
+            "type": "array",
+            "items": {"type": "number"}
+          },
+          "best_energy": {"type": "number"},
+          "purity": {"type": "number"},
+          "effective_dimension": {"type": "number"},
+          "convergence_iteration": {"type": "integer"},
+          "vram_used_mb": {"type": "number"},
+          "execution_time_ms": {"type": "number"}
+        }
+      },
+      "ui_component": {
+        "type": "line-chart",
+        "renderer": "recharts",
+        "x_axis": "iteration",
+        "y_axis": "energy",
+        "features": [
+          "zoom",
+          "tooltip",
+          "legend",
+          "export-png",
+          "convergence-marker"
+        ]
+      }
+    },
+    {
+      "name": "analyze_portfolio_risk",
+      "display_name": "Blockchain Portfolio Risk",
+      "description": "Interactive portfolio risk analysis dashboard",
+      "ui_type": "dashboard",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "title": "Wallet Address",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "historical_blocks": {
+            "type": "integer",
+            "title": "Historical Blocks",
+            "default": 1000,
+            "minimum": 100,
+            "maximum": 10000
+          }
+        },
+        "required": ["address"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "volatility": {"type": "number"},
+          "sharpe_ratio": {"type": "number"},
+          "max_drawdown": {"type": "number"},
+          "var_95": {"type": "number"},
+          "balance_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "block": {"type": "integer"},
+                "balance_eth": {"type": "number"},
+                "timestamp": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "ui_component": {
+        "type": "multi-chart",
+        "renderers": [
+          {
+            "name": "balance-timeline",
+            "type": "area-chart",
+            "data_key": "balance_history"
+          },
+          {
+            "name": "risk-metrics",
+            "type": "radar-chart",
+            "metrics": ["volatility", "sharpe_ratio", "max_drawdown", "var_95"]
+          }
+        ],
+        "layout": "grid",
+        "columns": 2
+      }
+    }
+  ],
+  "server": {
+    "name": "diamond-node-mcp",
+    "version": "1.0.0",
+    "endpoint": "http://localhost:8080/mcp",
+    "transport": "streamable-http",
+    "capabilities": {
+      "tools": true,
+      "apps": true,
+      "streaming": true
+    }
+  },
+  "ui": {
+    "theme": "dark",
+    "layout": "dashboard",
+    "components": {
+      "header": {
+        "title": "Diamond Node Unified Inference",
+        "subtitle": "YOLO11 + CUDA-Q + Blockchain Analytics",
+        "logo": "/static/logo.png"
+      },
+      "sidebar": {
+        "enabled": true,
+        "tools": [
+          "run_yolo11_detection",
+          "query_vram_status",
+          "run_cuda_q_qaoa",
+          "analyze_portfolio_risk"
+        ]
+      },
+      "main": {
+        "type": "tab-panel",
+        "default_tab": "yolo11"
+      }
+    },
+    "customStyles": {
+      "primary_color": "#00D4FF",
+      "secondary_color": "#7B2FBE",
+      "background": "#0A0E27",
+      "surface": "#151B3B",
+      "text": "#FFFFFF",
+      "text_secondary": "#94A3B8"
+    }
+  },
+  "integration": {
+    "claude_orchestrator": {
+      "enabled": true,
+      "module": "~/unified_inference/claude_orchestrator.py",
+      "class": "ClaudeOrchestrator"
+    },
+    "web_ui": {
+      "enabled": true,
+      "port": 8080,
+      "endpoint": "/mcp"
+    },
+    "monitoring": {
+      "langsmith": true,
+      "appsignal": true,
+      "vercel_analytics": true
+    }
+  },
+  "deployment": {
+    "type": "hybrid",
+    "local": {
+      "enabled": true,
+      "systemd_service": "web-ui.service"
+    },
+    "cloud": {
+      "enabled": false,
+      "platform": "cloudflare-workers"
+    }
+  }
+}

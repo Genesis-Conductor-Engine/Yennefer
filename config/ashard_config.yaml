@@ -1,0 +1,40 @@
+ashard:
+  device: "cuda:0"
+  vram_total: 3895918592  # 3.63GB actual (GTX 1650)
+  vram_allocation:
+    enkg_kernel: 1753163366  # ~1.63GB for Triton kernel
+    orchestration: 876581683  # ~815MB for orchestration
+    buffer: 876581683  # ~815MB buffer
+  tensor_cores: false  # GTX 1650 is Turing without tensor cores
+  memory_alignment: 512  # bytes
+  block_size: 1024
+  max_temperature: 89.6  # °C (hardware limit)
+  
+  # Thermal management
+  thermal:
+    warn_threshold: 85.0  # °C - start reducing load
+    critical_threshold: 89.0  # °C - emergency stop
+    check_interval: 5  # seconds
+    throttle_factor: 0.7  # reduce to 70% capacity when hot
+  
+  # Gateway integration
+  gateway:
+    metrics_url: "http://localhost:8000/metrics"
+    orchestrate_url: "http://localhost:8000/v1/orchestrate"
+    auth_env_var: "GATEWAY_SECRET"
+    poll_interval: 10  # seconds
+  
+  # Performance tuning
+  performance:
+    enable_cudnn_benchmark: true
+    enable_tf32: true  # Ampere+ only, GTX 1650 is Turing
+    enable_cuda_graphs: false  # May cause issues on some kernels
+    pin_memory: true
+    non_blocking: true
+  
+  # Safety limits
+  safety:
+    max_batch_size: 8
+    max_sequence_length: 2048
+    oom_retry_attempts: 3
+    emergency_reserve_bytes: 268435456  # 256MB emergency reserve

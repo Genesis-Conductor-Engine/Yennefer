@@ -1,0 +1,19 @@
+[Unit]
+Description=Maru MCP Guardian - Anomaly Detection & Reframe
+After=network.target yennefer-telemetry.service
+Requires=yennefer-telemetry.service
+
+[Service]
+Type=simple
+User=diamondnode
+WorkingDirectory=/home/diamondnode/diamondnode-unified-inference
+Environment=NOTION_TOKEN=
+EnvironmentFile=-/etc/default/maru-guardian
+ExecStart=/usr/bin/python3 workers/maru_guardian.py
+Restart=always
+RestartSec=60
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
