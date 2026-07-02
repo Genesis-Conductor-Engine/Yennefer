@@ -11,7 +11,7 @@ const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -46,6 +46,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Environment: A rugged alien landscape with traversable terrain and reactive dust physics." },
+      { type: "MUTATE", content: "Environment: This is a macro-scale makerspace workbench. The ground is a vast, polished light-brown wood table with realistic grain and friction." },
+      { type: "MUTATE", content: "Environment: A photorealistic alpine meadow with wildflowers. Among the evergreen pine trees is a rustic log cabin with a front porch." },
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
