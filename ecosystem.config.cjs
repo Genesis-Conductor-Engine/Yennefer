@@ -1,6 +1,8 @@
 // PM2 Ecosystem Configuration for Yennefer Genesis Conductor
 // All services configured for always-on operation with auto-restart
 
+const genieConfig = require('./ecosystem.genie.config.cjs');
+
 module.exports = {
   apps: [
     // === CORE SERVICES ===
@@ -108,18 +110,6 @@ module.exports = {
         ALWAYS_ON: 'true'
       }
     },
-    {
-      name: 'project-genie',
-      script: './scripts/genesis.cjs',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '300M',
-      restart_delay: 5000,
-      env: {
-        GENESIS_LOOP: 'true',
-        FORCE_MUTATION: 'true',
-        ALWAYS_ON: 'true'
-      }
-    }
+    ...genieConfig.apps
   ]
 };
