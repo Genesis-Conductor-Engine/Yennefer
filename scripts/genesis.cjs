@@ -11,7 +11,7 @@ const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -46,6 +46,8 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Generate an interactive landscape with traversable terrain" },
+      { type: "MUTATE", content: "Build a macro-scale makerspace workbench with realistic friction" },
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -154,14 +156,16 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  let geometry = '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />';
+  const lowerDirective = (directive || '').toLowerCase();
+
+  if (lowerDirective.includes('makerspace') || lowerDirective.includes('box')) {
+    geometry = '<boxGeometry args={[2, 2, 2]} />';
+  } else if (lowerDirective.includes('landscape') || lowerDirective.includes('plane')) {
+    geometry = '<planeGeometry args={[5, 5, 32, 32]} />';
+  } else if (lowerDirective.includes('sphere')) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  }
 
   const materials = [
     `
