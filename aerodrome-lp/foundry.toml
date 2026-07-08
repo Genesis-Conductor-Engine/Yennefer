@@ -1,0 +1,17 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.32"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+
+# Base mainnet. Use:  forge script ... --rpc-url base
+[rpc_endpoints]
+base = "https://base-rpc.publicnode.com"
+
+# For `cast interface` / contract verification (Base = chain 8453).
+# ETHERSCAN_API_KEY comes from the environment; never commit it.
+[etherscan]
+base = { key = "${ETHERSCAN_API_KEY}", chain = 8453 }

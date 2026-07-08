@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.32;
 
 contract Genesis {
     string public name = 'Genesis Conductor';

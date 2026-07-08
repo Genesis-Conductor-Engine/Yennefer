@@ -1,0 +1,38 @@
+{
+  "network": "base-mainnet",
+  "chain_id": 8453,
+  "rpc_url": "https://base-rpc.publicnode.com",
+  "addresses": {
+    "router": "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43",
+    "pool_factory": "0x420DD381b31aEf6683db6B902084cB0FFECe40Da",
+    "voter": "0x16613524e02ad97eDfeF371bC883F2F5d6C480A5",
+    "aero": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+    "weth": "0x4200000000000000000000000000000000000006",
+    "wqflop": "0x69262A2D7c92c074729823B654fE7E4Cdb749747",
+    "qflop": "0xa8F5e136aa74803B8DB377a14f79F6c8Dd3959c7",
+    "pool_wqflop_weth": "0x4aBC6D796cd036b6f1E433A97F9784a00f90C53e",
+    "gauge": "0x0000000000000000000000000000000000000000"
+  },
+  "pool": {
+    "stable": false
+  },
+  "caps": {
+    "max_weth_per_tx_eth": "0.02",
+    "daily_weth_cap_eth": "0.1",
+    "max_slippage_bps": 100,
+    "gas_reserve_eth": "0.002",
+    "first_live_max_weth_eth": "0.002",
+    "min_weth_reserve_for_add_wei": "1000000000000000"
+  },
+  "allowlist_targets": [
+    "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43",
+    "0x420DD381b31aEf6683db6B902084cB0FFECe40Da",
+    "0x4aBC6D796cd036b6f1E433A97F9784a00f90C53e",
+    "0x69262A2D7c92c074729823B654fE7E4Cdb749747",
+    "0x4200000000000000000000000000000000000006"
+  ],
+  "findings_2026_06_09": {
+    "pool_state": "DEGENERATE: reserves ~0.00000074 WETH vs ~11.39B wQFLOP; implied wQFLOP price ~= 65 wei. Proportional adds donate value. Default decision = HOLD until ratio is sane (WETH reserve >= min_weth_reserve_for_add_wei) or operator passes --force-seed with an explicit ratio.",
+    "gauge": "NONE (Voter.gauges(pool)=0x0): LP earns swap fees only, no AERO emissions. gauge.deposit path is skipped until a gauge exists."
+  }
+}

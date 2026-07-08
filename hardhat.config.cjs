@@ -44,9 +44,13 @@ module.exports = {
     enabled: false,
   },
   solidity: {
+    // 0.8.32 clears explorer warnings for:
+    // LostStorageArrayWriteOnSlotOverflow, VerbatimInvalidDeduplication,
+    // FullInlinerNonExpressionSplitArgumentEvaluationOrder, MissingSideEffectsOnSelectorAccess
     compilers: [
-      { version: '0.8.24' },
+      { version: '0.8.32', settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: 'cancun' } },
       { version: '0.8.28' },
+      { version: '0.8.24' },
     ],
   },
   networks: {
