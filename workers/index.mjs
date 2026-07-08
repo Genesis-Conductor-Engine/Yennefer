@@ -107,8 +107,13 @@ async function getJWKS() {
 function base64UrlDecode(str) {
   const b64 = str.replaceAll('-', '+').replaceAll('_', '/');
   const padded = b64.padEnd(b64.length + (4 - (b64.length % 4)) % 4, '=');
-  const binStr = atob(padded);
-  return new Uint8Array(binStr.length).map((_, i) => binStr.charCodeAt(i));
+  const bin = atob(padded);
+  const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = bin.charCodeAt(i);
+  }
+  return bytes;
 }
 
 async function validateJWT(request) {
