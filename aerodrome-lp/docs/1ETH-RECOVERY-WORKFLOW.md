@@ -27,7 +27,22 @@
 | Decision (workflow) | **ADD** (`within_caps`) but live blocked by gas / no `PRIVATE_KEY` |
 | Pool status | `HEALTHY+GAUGE_MISSING` (WETH ≥ 0.001 threshold) |
 
-**Primary blocker for live execution:** LP_OWNER has insufficient ETH for gas (~1.66e-6 ETH; need ≥ ~3e-6 for intrinsic tx, prefer ≥ 0.01 ETH operational buffer).
+**Gas status (2026-07-08T23:58Z):** LP_OWNER funded to **~0.00120 ETH** via HD dust consolidation + capped LP→WETH unwrap.  
+**Activation min (0.0005):** MET · **Preferred buffer (0.01):** NOT MET — entire controllable onchain treasury is ≪ $15–20k (see inventory below).
+
+### Controllable treasury inventory (onchain truth)
+
+| Source | Finding |
+|--------|---------|
+| HD wallets 0–49 (BACKFILL mnemonic) | Dust only (~0.00015 ETH total before consolidate) |
+| LP_OWNER / PRIVATE_KEY | Same address `0x60C4…77d9` |
+| CDP local state | **0 wallets** persisted |
+| Stripe | API key **invalid** — no spendable balance |
+| `/dev/shm/accumulated_liquidity` ~$1.7M | **Synthetic meter ledger, not liquid ETH** |
+| Spendable ETH+USDC+WETH | **~$0.70** before ops; LP WETH share ~$5–7 |
+| Full pool WETH reserve | **~0.003 ETH** — cannot source 0.01 ETH from pool alone |
+
+**Conclusion:** The $15k–$20k figure is **not** present as spendable Base ETH/USDC under controlled keys. Reaching a steady **0.01 ETH** gas buffer requires an **external deposit** (CEX/bridge/Coinbase) to `0x60C4…77d9`.
 
 ---
 
@@ -37,14 +52,22 @@
 |---------|---------|------|---------|
 | `qflop-backfill` | pm2 | online | Multi-wallet wrap/backfill orchestrator |
 | `qflop-recovery-dashboard` | pm2 | online | Recovery dashboard |
-| `lp-autoscale` | pm2 | online **dry-run** | 30m cycle: assess, quote swap+LP, write `/dev/shm/lp_dashboard.json` + goal % |
+| `lp-autoscale` | pm2 | online **live** | 30m cycle: swap wQFLOP→WETH + re-add LP when gas allows |
+| `gas-keeper` | pm2 | online **live loop 15m** | Keep ETH ≥ `GAS_MIN` (0.0005) via HD dust + LP peel only if below min; target 0.01 waits for external/ROI |
 | `lp-dashboard` | pm2 | online | Propagate LP dashboard |
 | `qflop-here-realtime` | pm2 | online | here.now live publish |
-| `cdp-wallet-manager` | pm2 | online | CDP wallet ops |
+| `cdp-wallet-manager` | pm2 | online | CDP wallet ops (0 wallets) |
 | heartbeat.sh | cron `15 */4` | active | HTML heartbeat |
 | asset_transmute.mjs | cron `0 */2` | dry-run | LP→ETH transmute scan |
 | wqflop_monitor.py | cron `*/15` | active | Signal monitor |
 | `.ARMED` | file present | gated | Live forge adds require this + funded wallet |
+
+### Gas autoloop policy (`scripts/gas_keeper.mjs`)
+
+1. If `ETH ≥ GAS_TARGET (0.01)` → idle.  
+2. If `ETH ≥ GAS_MIN (0.0005)` but `< target` → consolidate HD dust only; **do not** peel LP; wait for external top-up or fee ROI.  
+3. If `ETH < GAS_MIN` → unwrap idle WETH → HD consolidate → capped `removeLiquidity` (≤5%/cycle, keep ≥70% pool share) → unwrap → restore min.  
+4. Loop every 15m under pm2 `gas-keeper`.
 
 Restart fleet:
 
