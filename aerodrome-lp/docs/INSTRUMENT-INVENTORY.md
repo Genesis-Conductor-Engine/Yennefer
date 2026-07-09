@@ -49,6 +49,7 @@ This session re-verified those conclusions with live RPC (see below). Gas bootst
 | **qflop-backfill orchestrator** | LIVE sim-ish | Base | uses HD set | registry `sim: true` in here.now copy; shm revenue **not cash** |
 | **10pct-autonomy / polygon agents** | AGENT PROCS | — | no separate treasury | monitor/directive stack; does not mint spendable ETH |
 | **diamondvault-notion-worker** | HEALTHY :8081 | config | — | `polygon_contract=0x0`, `base_contract=0x0` |
+| **Alchemy** | **RPC + portfolio API LIVE** | Base/Eth/Poly/OP/Arb | **not a treasury** | API key works; `digital-assets` status was `awaiting_key` / `wqflop-unliquid`; config points at `/tmp/wallet.json` (**missing**); no Alchemy AA/gas-manager wallet funded |
 
 ---
 
@@ -75,6 +76,20 @@ This session re-verified those conclusions with live RPC (see below). Gas bootst
 | Page id present | `BACKFILL_NOTION_PAGE_ID=4bea432f-…` (cannot read without token) |
 
 **Action for operator:** run `ntn login` or set a real `NOTION_API_TOKEN` integration secret, then re-query pages *wQFLOP Liquidity — Plans & Projections* and any treasury DB.
+
+---
+
+## Alchemy (added 2026-07-09)
+
+| Item | Detail |
+|------|--------|
+| Role | **Infrastructure** (RPC / token index), not a cash account |
+| API key | Present (`dna-agent-pins/tunnel-config.json` + env); Base/Eth/Polygon/OP/Arb `eth_blockNumber` **OK** |
+| `~/.config/alchemy/config.json` | `wallet_key_file: /tmp/wallet.json` — **file absent** (no live Alchemy-managed wallet material) |
+| `digital-assets/manifest.json` | `"alchemy": { "status": "awaiting_key", "settlement_token": "wqflop-unliquid" }` |
+| `alchemy-demo/` | Demo NFT/wallet script only |
+| Portfolio via Alchemy (`alchemy_getTokenBalances`) | **LP_OWNER on Base:** ETH ~0.0012 + USDC dust (~$0.04) + LP shares + large **illiquid wQFLOP** + many spam/airdrop ERC20s; **Eth mainnet tokens: 0**; **Polygon tokens: 0** |
+| Can Alchemy “send 0.01 ETH”? | **No** — Alchemy does not custody ETH for this stack without a separate funded smart wallet / dashboard transfer |
 
 ---
 
