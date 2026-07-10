@@ -12,14 +12,22 @@
     "build": "react-scripts build"
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version"
+    ]
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "typescript": "^4.9.0"
+    "typescript": "^7.0.2"
   },
   "proxy": "http://localhost:8080"
 }
