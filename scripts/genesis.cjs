@@ -5,14 +5,24 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
+
+// --- WRAPPERS ---
+function writeJournal(entry) {
+  try {
+    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+  } catch (e) {
+    console.error(`   ⚠️ Failed to write to journal: ${e.message}`);
+  }
+}
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -94,7 +104,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(entry);
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +156,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -161,7 +171,7 @@ function generateEvolutionComponent(name, directive) {
     '<octahedronGeometry args={[1.5, 0]} />',
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const geometry = geometries[crypto.randomInt(0, geometries.length)];
 
   const materials = [
     `
@@ -193,7 +203,7 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
       />`
   ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+  const material = materials[crypto.randomInt(0, materials.length)];
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -278,7 +288,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(errorLog);
   }
 }
 

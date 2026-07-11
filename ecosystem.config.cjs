@@ -84,6 +84,17 @@ module.exports = {
 
     // === MINING & MONITORING ===
     {
+      name: 'project-genie',
+      script: './scripts/genesis.cjs',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '200M',
+      restart_delay: 5000,
+      env: {
+        GENESIS_LOOP: 'true'
+      }
+    },
+    {
       name: 'qflop-miner',
       script: '/home/yenn/genesis-q-mem/qmcp_qflop_miner.py',
       interpreter: 'python3',
