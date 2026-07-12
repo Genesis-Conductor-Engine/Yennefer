@@ -170,7 +170,15 @@ async function dispatchTheBuilder(directive) {
 function generateEvolutionComponent(name, directive) {
   const lowercaseDirective = directive.toLowerCase();
 
-  let geometry;
+  const geometries = [
+    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+    '<sphereGeometry args={[1.5, 32, 32]} />',
+    '<boxGeometry args={[2, 2, 2]} />',
+    '<octahedronGeometry args={[1.5, 0]} />',
+    '<icosahedronGeometry args={[1.5, 0]} />'
+  ];
+  let geometry = geometries[crypto.randomInt(geometries.length)];
+
   if (lowercaseDirective.includes('landscape')) {
     geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
   } else if (lowercaseDirective.includes('makerspace')) {
@@ -179,18 +187,40 @@ function generateEvolutionComponent(name, directive) {
     geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
   } else if (lowercaseDirective.includes('fractal')) {
     geometry = '<octahedronGeometry args={[1.5, 2]} />';
-  } else {
-    const geometries = [
-      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-      '<sphereGeometry args={[1.5, 32, 32]} />',
-      '<boxGeometry args={[2, 2, 2]} />',
-      '<octahedronGeometry args={[1.5, 0]} />',
-      '<icosahedronGeometry args={[1.5, 0]} />'
-    ];
-    geometry = geometries[crypto.randomInt(geometries.length)];
   }
 
-  let material;
+  const materials = [
+    `
+      <MeshDistortMaterial
+        color="#8b5cf6"
+        emissive="#4c1d95"
+        emissiveIntensity={0.5 + balance * 2}
+        roughness={0.2}
+        metalness={0.8}
+        distort={0.3}
+        speed={2}
+      />`,
+    `
+      <MeshWobbleMaterial
+        color="#06b6d4"
+        emissive="#0e7490"
+        emissiveIntensity={0.5 + balance * 2}
+        roughness={0.2}
+        metalness={0.8}
+        factor={1}
+        speed={2}
+      />`,
+    `
+      <meshStandardMaterial
+        color="#fbbf24"
+        emissive="#92400e"
+        emissiveIntensity={0.5 + balance * 2}
+        roughness={0.2}
+        metalness={0.8}
+      />`
+  ];
+  let material = materials[crypto.randomInt(materials.length)];
+
   if (lowercaseDirective.includes('landscape')) {
     material = `
       <meshStandardMaterial
@@ -212,38 +242,6 @@ function generateEvolutionComponent(name, directive) {
         transparent={true}
         opacity={0.8}
       />`;
-  } else {
-    const materials = [
-      `
-        <MeshDistortMaterial
-          color="#8b5cf6"
-          emissive="#4c1d95"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-          distort={0.3}
-          speed={2}
-        />`,
-      `
-        <MeshWobbleMaterial
-          color="#06b6d4"
-          emissive="#0e7490"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-          factor={1}
-          speed={2}
-        />`,
-      `
-        <meshStandardMaterial
-          color="#fbbf24"
-          emissive="#92400e"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-        />`
-    ];
-    material = materials[crypto.randomInt(materials.length)];
   }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
