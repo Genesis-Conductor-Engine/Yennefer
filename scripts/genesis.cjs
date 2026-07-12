@@ -5,14 +5,24 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
+
+// --- LOGGING ---
+function writeJournal(logObject) {
+  try {
+    fs.appendFileSync(PATHS.journal, JSON.stringify(logObject) + "\n");
+  } catch (e) {
+    console.error(`   ⚠️ Failed to write to journal: ${e.message}`);
+  }
+}
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -46,6 +56,10 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "Forge an interactive landscape that responds to neural pathways" },
+      { type: "MUTATE", content: "Construct a digital makerspace for collective intelligence gathering" },
+      { type: "MUTATE", content: "Generate a sprawling architectural landscape spanning multiple dimensions" },
+      { type: "MUTATE", content: "Initialize a quantum makerspace with floating toolsets" }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -94,7 +108,7 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+    writeJournal(entry);
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
@@ -146,7 +160,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -154,46 +168,83 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const lowercaseDirective = directive.toLowerCase();
 
-  const materials = [
-    `
-      <MeshDistortMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        factor={1}
-        speed={2}
-      />`,
-    `
+  let geometry;
+  if (lowercaseDirective.includes('landscape')) {
+    geometry = '<planeGeometry args={[10, 10, 32, 32]} />';
+  } else if (lowercaseDirective.includes('makerspace')) {
+    geometry = '<boxGeometry args={[3, 2, 3]} />';
+  } else if (lowercaseDirective.includes('sphere')) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  } else if (lowercaseDirective.includes('fractal')) {
+    geometry = '<octahedronGeometry args={[1.5, 2]} />';
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[crypto.randomInt(geometries.length)];
+  }
+
+  let material;
+  if (lowercaseDirective.includes('landscape')) {
+    material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#22c55e"
+        emissive="#14532d"
+        emissiveIntensity={0.2 + balance}
+        roughness={0.8}
+        metalness={0.1}
+        wireframe={true}
+      />`;
+  } else if (lowercaseDirective.includes('makerspace')) {
+    material = `
+      <meshStandardMaterial
+        color="#3b82f6"
+        emissive="#1e3a8a"
+        emissiveIntensity={0.4 + balance * 1.5}
+        roughness={0.3}
+        metalness={0.6}
+        transparent={true}
+        opacity={0.8}
+      />`;
+  } else {
+    const materials = [
+      `
+        <MeshDistortMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          distort={0.3}
+          speed={2}
+        />`,
+      `
+        <MeshWobbleMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          factor={1}
+          speed={2}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[crypto.randomInt(materials.length)];
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -278,7 +329,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(errorLog);
   }
 }
 

@@ -107,6 +107,21 @@ module.exports = {
         COMPUTE_MODE: 'local',
         ALWAYS_ON: 'true'
       }
+    },
+
+    // === CONTINUOUS BUILDING ===
+    {
+      name: 'project-genie',
+      script: './scripts/genesis.cjs',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      restart_delay: 10000,
+      env: {
+        COMPUTE_MODE: 'local',
+        ALWAYS_ON: 'true',
+        GENESIS_LOOP: 'true'
+      }
     }
   ]
 };
