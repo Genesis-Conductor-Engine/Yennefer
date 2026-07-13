@@ -105,9 +105,10 @@ async function getJWKS() {
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
 function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  const normalizedStr = str.replace(/-/g, '+').replace(/_/g, '/');
+  let paddedStr = normalizedStr;
+  while (paddedStr.length % 4) paddedStr += '=';
+  return Uint8Array.from(atob(paddedStr), c => c.charCodeAt(0));
 }
 
 async function validateJWT(request) {
