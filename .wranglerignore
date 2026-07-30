@@ -1,0 +1,15 @@
+scripts
+contracts
+docker
+docs
+node_modules
+genesis-q-mem
+yennefer-observatory
+.git
+.env*
+ecosystem.*.config.cjs
+logs
+*.log
+!package.json
+!package-lock.json
+!wrangler.toml
