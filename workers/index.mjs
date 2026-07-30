@@ -129,8 +129,15 @@ async function validateJWT(request) {
     const [headerB64, payloadB64, sigB64] = parts;
 
     const dec = new TextDecoder();
-    const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
-    const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+    const decodedHeaderStr = dec.decode(base64UrlDecode(headerB64));
+    const decodedPayloadStr = dec.decode(base64UrlDecode(payloadB64));
+
+    // Validate length before JSON.parse to prevent SonarCloud DoS warnings
+    if (!decodedHeaderStr || decodedHeaderStr.length > 8192) throw new Error('Invalid JWT header length');
+    if (!decodedPayloadStr || decodedPayloadStr.length > 8192) throw new Error('Invalid JWT payload length');
+
+    const header = JSON.parse(decodedHeaderStr);
+    const payload = JSON.parse(decodedPayloadStr);
 
     // Reject unexpected algorithm/type before touching the crypto path to
     // prevent algorithm-confusion attacks and fail fast for auditing.
