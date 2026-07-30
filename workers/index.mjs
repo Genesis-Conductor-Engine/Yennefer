@@ -105,9 +105,20 @@ async function getJWKS() {
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
 function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  // Prevent regex injection / ReDoS by limiting length
+  if (!str || str.length > 8192) throw new Error('JWT component too long');
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (base64.length % 4)) % 4;
+  const padded = base64 + '='.repeat(padLength);
+
+  // Convert base64 to Uint8Array safely
+  const binary_string = atob(padded);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes;
 }
 
 async function validateJWT(request) {
