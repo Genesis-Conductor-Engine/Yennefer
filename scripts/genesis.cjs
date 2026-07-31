@@ -164,6 +164,37 @@ async function dispatchTheBuilder(directive) {
   }
 }
 
+const COMMON_MATERIALS = [
+  `
+    <MeshDistortMaterial
+      color="#8b5cf6"
+      emissive="#4c1d95"
+      emissiveIntensity={0.5 + balance * 2}
+      roughness={0.2}
+      metalness={0.8}
+      distort={0.3}
+      speed={2}
+    />`,
+  `
+    <MeshWobbleMaterial
+      color="#06b6d4"
+      emissive="#0e7490"
+      emissiveIntensity={0.5 + balance * 2}
+      roughness={0.2}
+      metalness={0.8}
+      factor={1}
+      speed={2}
+    />`,
+  `
+    <meshStandardMaterial
+      color="#fbbf24"
+      emissive="#92400e"
+      emissiveIntensity={0.5 + balance * 2}
+      roughness={0.2}
+      metalness={0.8}
+    />`
+];
+
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
   let geometry = '';
@@ -214,37 +245,7 @@ function generateEvolutionComponent(name, directive) {
           metalness={0.8}
         />`;
     } else {
-      const materials = [
-        `
-          <MeshDistortMaterial
-            color="#8b5cf6"
-            emissive="#4c1d95"
-            emissiveIntensity={0.5 + balance * 2}
-            roughness={0.2}
-            metalness={0.8}
-            distort={0.3}
-            speed={2}
-          />`,
-        `
-          <MeshWobbleMaterial
-            color="#06b6d4"
-            emissive="#0e7490"
-            emissiveIntensity={0.5 + balance * 2}
-            roughness={0.2}
-            metalness={0.8}
-            factor={1}
-            speed={2}
-          />`,
-        `
-          <meshStandardMaterial
-            color="#fbbf24"
-            emissive="#92400e"
-            emissiveIntensity={0.5 + balance * 2}
-            roughness={0.2}
-            metalness={0.8}
-          />`
-      ];
-      material = materials[crypto.randomInt(0, materials.length)];
+      material = COMMON_MATERIALS[crypto.randomInt(0, COMMON_MATERIALS.length)];
     }
   }
 
