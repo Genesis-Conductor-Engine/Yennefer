@@ -203,10 +203,12 @@ function generateEvolutionComponent(name, directive) {
 
   // Procedural geometry selection based on directive keywords
   if (lowercaseDirective.includes('meadow') || lowercaseDirective.includes('ground') || lowercaseDirective.includes('table')) {
-    geometry = '<planeGeometry args={[10, 10]} />\n      <meshStandardMaterial color="#8b5cf6" roughness={0.8} metalness={0.2} />';
-    if (lowercaseDirective.includes('table')) {
-      geometry = '<boxGeometry args={[10, 0.5, 10]} />\n      <meshStandardMaterial color="#8b4513" roughness={0.7} metalness={0.1} />';
-    }
+    const isTable = lowercaseDirective.includes('table');
+    const geoStr = isTable ? '<boxGeometry args={[10, 0.5, 10]} />' : '<planeGeometry args={[10, 10]} />';
+    const colStr = isTable ? '#8b4513' : '#8b5cf6';
+    const roughStr = isTable ? '0.7' : '0.8';
+    const metalStr = isTable ? '0.1' : '0.2';
+    geometry = `${geoStr}\n      <meshStandardMaterial color="${colStr}" roughness={${roughStr}} metalness={${metalStr}} />`;
   } else if (lowercaseDirective.includes('box') || lowercaseDirective.includes('cardboard')) {
     geometry = '<boxGeometry args={[2, 2, 2]} />';
   } else if (lowercaseDirective.includes('orb') || lowercaseDirective.includes('sphere') || lowercaseDirective.includes('water')) {
@@ -236,14 +238,7 @@ function generateEvolutionComponent(name, directive) {
           speed={2}
         />`;
     } else if (lowercaseDirective.includes('golden') || lowercaseDirective.includes('aura')) {
-      material = `
-        <meshStandardMaterial
-          color="#fbbf24"
-          emissive="#d97706"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-        />`;
+      material = COMMON_MATERIALS[2].replace('#fbbf24', '#fbbf24').replace('#92400e', '#d97706');
     } else {
       material = COMMON_MATERIALS[crypto.randomInt(0, COMMON_MATERIALS.length)];
     }
