@@ -238,7 +238,7 @@ function generateEvolutionComponent(name, directive) {
           speed={2}
         />`;
     } else if (lowercaseDirective.includes('golden') || lowercaseDirective.includes('aura')) {
-      material = COMMON_MATERIALS[2].replace('#fbbf24', '#fbbf24').replace('#92400e', '#d97706');
+      material = COMMON_MATERIALS[2].replace('#92400e', '#d97706');
     } else {
       material = COMMON_MATERIALS[crypto.randomInt(0, COMMON_MATERIALS.length)];
     }
