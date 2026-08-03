@@ -134,13 +134,14 @@ async function validateJWT(request) {
 
     // Reject unexpected algorithm/type before touching the crypto path to
     // prevent algorithm-confusion attacks and fail fast for auditing.
-    if (header.alg !== 'RS256') throw new Error(`Unexpected JWT algorithm: ${header.alg}`);
-    if (header.typ && header.typ !== 'JWT') throw new Error(`Unexpected JWT type: ${header.typ}`);
+    const err = (msg) => { throw new Error(msg); };
+    if (header.alg !== 'RS256') err(`Unexpected JWT algorithm: ${header.alg}`);
+    if (header.typ && header.typ !== 'JWT') err(`Unexpected JWT type: ${header.typ}`);
 
     // Find the matching public key by kid
     const jwks = await getJWKS();
     const jwk = jwks.keys.find(k => k.kid === header.kid);
-    if (!jwk) throw new Error(`No JWKS key for kid=${header.kid}`);
+    if (!jwk) err(`No JWKS key for kid=${header.kid}`);
 
     // Cloudflare Access uses RS256 (RSASSA-PKCS1-v1_5 + SHA-256).
     // Cache the imported CryptoKey by kid so we pay the importKey cost only
@@ -159,14 +160,14 @@ async function validateJWT(request) {
     const valid = await crypto.subtle.verify(
       'RSASSA-PKCS1-v1_5', cryptoKey, base64UrlDecode(sigB64), message,
     );
-    if (!valid) throw new Error('Signature verification failed');
+    if (!valid) err('Signature verification failed');
 
     // Validate standard claims
     const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) throw new Error('Token expired');
-    if (payload.iss !== SETTINGS.ISSUER) throw new Error('Unexpected issuer');
+    if (payload.exp && payload.exp < now) err('Token expired');
+    if (payload.iss !== SETTINGS.ISSUER) err('Unexpected issuer');
     const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-    if (!aud.includes(SETTINGS.AUDIENCE)) throw new Error('Audience mismatch');
+    if (!aud.includes(SETTINGS.AUDIENCE)) err('Audience mismatch');
 
     return { ok: true, email: payload.email };
   } catch (error) {
