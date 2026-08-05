@@ -106,7 +106,7 @@ async function getJWKS() {
 
 const base64UrlDecode = (str) => {
   // Replace non-url compatible chars with base64 standard chars
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  str = str.replaceAll('-', '+').replaceAll('_', '/');
 
   // Pad with equal signs
   const pad = str.length % 4;
@@ -115,7 +115,7 @@ const base64UrlDecode = (str) => {
     str += new Array(5 - pad).join('=');
   }
 
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  return Uint8Array.from(atob(str), c => c.codePointAt(0));
 };
 
 const extractJWTComponents = (tokenString) => {
