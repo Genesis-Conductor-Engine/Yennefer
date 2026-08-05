@@ -132,25 +132,23 @@ async function validateJWT(request) {
     const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
     const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
 
-    // Reject unexpected algorithm/type before touching the crypto path to
-    // prevent algorithm-confusion attacks and fail fast for auditing.
-    if (header.alg !== 'RS256') throw new Error(`Unexpected JWT algorithm: ${header.alg}`);
-    if (header.typ && header.typ !== 'JWT') throw new Error(`Unexpected JWT type: ${header.typ}`);
+    // Ensure algorithm and type are correct to prevent confusion attacks.
+    if (header.alg !== 'RS256') throw new Error(`Unexpected algorithm: ${header.alg}`);
+    if (header.typ && header.typ !== 'JWT') throw new Error(`Unexpected type: ${header.typ}`);
 
-    // Find the matching public key by kid
-    const jwks = await getJWKS();
-    const jwk = jwks.keys.find(k => k.kid === header.kid);
-    if (!jwk) throw new Error(`No JWKS key for kid=${header.kid}`);
+    // Fetch JWKS and find the matching public key by kid.
+    const keys = await getJWKS();
+    const matchingKey = keys.keys.find(k => k.kid === header.kid);
+    if (!matchingKey) throw new Error(`Missing key for kid=${header.kid}`);
 
-    // Cloudflare Access uses RS256 (RSASSA-PKCS1-v1_5 + SHA-256).
-    // Cache the imported CryptoKey by kid so we pay the importKey cost only
-    // once per key rotation rather than on every authenticated request.
+    // Cloudflare Access relies on RS256 (RSASSA-PKCS1-v1_5 + SHA-256).
+    // Cache the CryptoKey to avoid importing it on every request.
     let cryptoKey = _cryptoKeyCache.get(header.kid);
     if (!cryptoKey) {
       cryptoKey = await crypto.subtle.importKey(
-        'jwk', jwk,
+        'jwk', matchingKey,
         { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-        false, ['verify'],
+        false, ['verify']
       );
       _cryptoKeyCache.set(header.kid, cryptoKey);
     }
