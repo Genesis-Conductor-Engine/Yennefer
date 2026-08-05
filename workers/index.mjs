@@ -104,16 +104,33 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-}
+const base64UrlDecode = (input) => {
+  let normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  while (normalized.length % 4) normalized += '=';
+  const binaryString = atob(normalized);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+};
+
+const extractJWTComponents = (tokenString) => {
+  const segments = tokenString.split('.');
+  if (segments.length !== 3) throw new Error('Invalid JWT format');
+  return segments;
+};
+
+const decodeTokenSection = (encodedString) => {
+  const decoder = new TextDecoder();
+  const decodedBytes = base64UrlDecode(encodedString);
+  return JSON.parse(decoder.decode(decodedBytes));
+};
 
 async function validateJWT(request) {
-  const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
+  const token = request.headers.get('Cf-Access-Jwt-Assertion');
 
-  if (!jwt) {
+  if (!token) {
     return {
       ok: false,
       response: new Response('Missing Cloudflare Access Token', {
@@ -124,51 +141,56 @@ async function validateJWT(request) {
   }
 
   try {
-    const parts = jwt.split('.');
-    if (parts.length !== 3) throw new Error('Malformed JWT');
-    const [headerB64, payloadB64, sigB64] = parts;
+    const [encodedHeader, encodedPayload, encodedSignature] = extractJWTComponents(token);
 
-    const dec = new TextDecoder();
-    const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
-    const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+    const tokenHeader = decodeTokenSection(encodedHeader);
+    const tokenPayload = decodeTokenSection(encodedPayload);
 
-    // Ensure algorithm and type are correct to prevent confusion attacks.
-    if (header.alg !== 'RS256') throw new Error(`Unexpected algorithm: ${header.alg}`);
-    if (header.typ && header.typ !== 'JWT') throw new Error(`Unexpected type: ${header.typ}`);
+    // Verify token type and signing algorithm
+    if (tokenHeader.alg !== 'RS256') throw new Error(`Unsupported algorithm: ${tokenHeader.alg}`);
+    if (tokenHeader.typ && tokenHeader.typ !== 'JWT') throw new Error(`Unsupported type: ${tokenHeader.typ}`);
 
-    // Fetch JWKS and find the matching public key by kid.
-    const keys = await getJWKS();
-    const matchingKey = keys.keys.find(k => k.kid === header.kid);
-    if (!matchingKey) throw new Error(`Missing key for kid=${header.kid}`);
+    // Retrieve public key from JWKS
+    const keySet = await getJWKS();
+    const publicKeyJWK = keySet.keys.find(k => k.kid === tokenHeader.kid);
+    if (!publicKeyJWK) throw new Error(`Key not found for kid: ${tokenHeader.kid}`);
 
-    // Cloudflare Access relies on RS256 (RSASSA-PKCS1-v1_5 + SHA-256).
-    // Cache the CryptoKey to avoid importing it on every request.
-    let cryptoKey = _cryptoKeyCache.get(header.kid);
-    if (!cryptoKey) {
-      cryptoKey = await crypto.subtle.importKey(
-        'jwk', matchingKey,
+    // Retrieve or import the CryptoKey
+    let verificationKey = _cryptoKeyCache.get(tokenHeader.kid);
+    if (!verificationKey) {
+      verificationKey = await crypto.subtle.importKey(
+        'jwk',
+        publicKeyJWK,
         { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-        false, ['verify']
+        false,
+        ['verify']
       );
-      _cryptoKeyCache.set(header.kid, cryptoKey);
+      _cryptoKeyCache.set(tokenHeader.kid, verificationKey);
     }
 
-    const message = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-    const valid = await crypto.subtle.verify(
-      'RSASSA-PKCS1-v1_5', cryptoKey, base64UrlDecode(sigB64), message,
+    // Verify the signature
+    const signedData = new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`);
+    const signatureBytes = base64UrlDecode(encodedSignature);
+    const isSignatureValid = await crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5',
+      verificationKey,
+      signatureBytes,
+      signedData
     );
-    if (!valid) throw new Error('Signature verification failed');
 
-    // Validate standard claims
-    const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) throw new Error('Token expired');
-    if (payload.iss !== SETTINGS.ISSUER) throw new Error('Unexpected issuer');
-    const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-    if (!aud.includes(SETTINGS.AUDIENCE)) throw new Error('Audience mismatch');
+    if (!isSignatureValid) throw new Error('Invalid signature');
 
-    return { ok: true, email: payload.email };
-  } catch (error) {
-    console.error('[Yennefer] JWT Validation Failed:', error.message);
+    // Verify expiration and claims
+    const currentTimeSeconds = Math.floor(Date.now() / 1000);
+    if (tokenPayload.exp && tokenPayload.exp < currentTimeSeconds) throw new Error('Token has expired');
+    if (tokenPayload.iss !== SETTINGS.ISSUER) throw new Error('Invalid issuer');
+
+    const audienceList = Array.isArray(tokenPayload.aud) ? tokenPayload.aud : [tokenPayload.aud];
+    if (!audienceList.includes(SETTINGS.AUDIENCE)) throw new Error('Invalid audience');
+
+    return { ok: true, email: tokenPayload.email };
+  } catch (err) {
+    console.error('[Yennefer] Token validation error:', err.message);
     return {
       ok: false,
       response: new Response('Unauthorized: Invalid or Expired Token', {
