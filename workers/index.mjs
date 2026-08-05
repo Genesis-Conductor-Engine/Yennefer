@@ -104,37 +104,6 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-const decodeBase64ToUint8Array = (base64Input) => {
-  const normalizedBase64 = base64Input.replace(/-/g, '+').replace(/_/g, '/');
-  const paddingLength = (4 - (normalizedBase64.length % 4)) % 4;
-  const paddedBase64 = normalizedBase64 + '='.repeat(paddingLength);
-
-  const decodedString = atob(paddedBase64);
-  const buffer = new ArrayBuffer(decodedString.length);
-  const uint8View = new Uint8Array(buffer);
-
-  for (let idx = 0; idx < decodedString.length; idx++) {
-    uint8View[idx] = decodedString.charCodeAt(idx);
-  }
-
-  return uint8View;
-};
-
-const extractJwtParts = (jwtString) => {
-  const tokenParts = jwtString.split('.');
-  if (tokenParts.length !== 3) {
-    throw new Error('Invalid number of token parts');
-  }
-  return tokenParts;
-};
-
-const decodeTokenSection = (sectionString) => {
-  const decodedBytes = decodeBase64ToUint8Array(sectionString);
-  const decoder = new TextDecoder('utf-8');
-  const jsonString = decoder.decode(decodedBytes);
-  return JSON.parse(jsonString);
-};
-
 async function validateJWT(request) {
   const token = request.headers.get('Cf-Access-Jwt-Assertion');
 
@@ -149,14 +118,28 @@ async function validateJWT(request) {
   }
 
   try {
-    const [encodedHeader, encodedPayload, encodedSignature] = extractJwtParts(token);
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      throw new Error('Invalid number of token parts');
+    }
+    const [encodedHeader, encodedPayload, encodedSignature] = tokenParts;
 
-    const tokenHeader = decodeTokenSection(encodedHeader);
-    const tokenPayload = decodeTokenSection(encodedPayload);
+    const parseSection = (sectionStr) => {
+      const b64 = sectionStr.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = (4 - (b64.length % 4)) % 4;
+      const decStr = atob(b64 + '='.repeat(pad));
+      const buf = new Uint8Array(decStr.length);
+      for (let i = 0; i < decStr.length; i++) buf[i] = decStr.charCodeAt(i);
+      return { buf, json: JSON.parse(new TextDecoder('utf-8').decode(buf)) };
+    };
 
-    // Verify token type and signing algorithm
-    if (tokenHeader.alg !== 'RS256') throw new Error(`Unsupported algorithm: ${tokenHeader.alg}`);
-    if (tokenHeader.typ && tokenHeader.typ !== 'JWT') throw new Error(`Unsupported type: ${tokenHeader.typ}`);
+    const headerData = parseSection(encodedHeader);
+    const payloadData = parseSection(encodedPayload);
+    const tokenHeader = headerData.json;
+    const tokenPayload = payloadData.json;
+
+    if (tokenHeader.alg !== 'RS256') throw new Error('Unsupported algorithm');
+    if (tokenHeader.typ !== 'JWT') throw new Error('Unsupported type');
 
     // Retrieve public key from JWKS
     const keySet = await getJWKS();
@@ -178,7 +161,12 @@ async function validateJWT(request) {
 
     // Verify the signature
     const signedData = new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`);
-    const signatureBytes = decodeBase64ToUint8Array(encodedSignature);
+    const sigB64 = encodedSignature.replace(/-/g, '+').replace(/_/g, '/');
+    const sigPad = (4 - (sigB64.length % 4)) % 4;
+    const sigDecStr = atob(sigB64 + '='.repeat(sigPad));
+    const signatureBytes = new Uint8Array(sigDecStr.length);
+    for (let i = 0; i < sigDecStr.length; i++) signatureBytes[i] = sigDecStr.charCodeAt(i);
+
     const isSignatureValid = await crypto.subtle.verify(
       'RSASSA-PKCS1-v1_5',
       verificationKey,
