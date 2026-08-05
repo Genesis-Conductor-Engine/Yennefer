@@ -105,8 +105,8 @@ async function getJWKS() {
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
 const helperBase64Decode = (rawB64) => {
-  const c1 = rawB64.split('-').join('+');
-  const c2 = c1.split('_').join('/');
+  const c1 = rawB64.replaceAll('-', '+');
+  const c2 = c1.replaceAll('_', '/');
 
   const pLen = c2.length % 4;
   let finalStr = c2;
@@ -115,8 +115,7 @@ const helperBase64Decode = (rawB64) => {
     if (pLen === 1) {
       throw new Error('Malformed base64 token');
     }
-    const padding = Array(5 - pLen).join('=');
-    finalStr = c2 + padding;
+    finalStr = c2 + '='.repeat(4 - pLen);
   }
 
   const asciiString = atob(finalStr);
@@ -124,7 +123,7 @@ const helperBase64Decode = (rawB64) => {
 
   let i = 0;
   while (i < asciiString.length) {
-    outBuffer[i] = asciiString.charCodeAt(i);
+    outBuffer[i] = asciiString.codePointAt(i);
     i++;
   }
 
