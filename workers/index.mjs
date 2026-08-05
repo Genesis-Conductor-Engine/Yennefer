@@ -104,41 +104,45 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-const base64UrlDecode = (inputString) => {
-  // Replace non-url compatible chars with base64 standard chars
-  const normalizedStr = inputString.replaceAll('-', '+').replaceAll('_', '/');
+const helperBase64Decode = (rawB64) => {
+  const c1 = rawB64.split('-').join('+');
+  const c2 = c1.split('_').join('/');
 
-  // Pad with equal signs
-  const padLength = normalizedStr.length % 4;
-  let paddedStr = normalizedStr;
+  const pLen = c2.length % 4;
+  let finalStr = c2;
 
-  if (padLength !== 0) {
-    if (padLength === 1) {
-      throw new Error('Invalid base64 encoding length');
+  if (pLen > 0) {
+    if (pLen === 1) {
+      throw new Error('Malformed base64 token');
     }
-    paddedStr += '='.repeat(4 - padLength);
+    const padding = Array(5 - pLen).join('=');
+    finalStr = c2 + padding;
   }
 
-  // Convert string to Uint8Array
-  const decodedStr = atob(paddedStr);
-  const arr = new Uint8Array(decodedStr.length);
-  for (let i = 0; i < decodedStr.length; i++) {
-    arr[i] = decodedStr.codePointAt(i);
+  const asciiString = atob(finalStr);
+  const outBuffer = new Uint8Array(asciiString.length);
+
+  let i = 0;
+  while (i < asciiString.length) {
+    outBuffer[i] = asciiString.charCodeAt(i);
+    i++;
   }
 
-  return arr;
+  return outBuffer;
 };
 
-const extractJWTComponents = (tokenString) => {
-  const segments = tokenString.split('.');
-  if (segments.length !== 3) throw new Error('Invalid JWT format');
-  return segments;
+const splitAndValidateJWT = (fullToken) => {
+  const parts = fullToken.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Token does not have 3 parts');
+  }
+  return parts;
 };
 
-const decodeTokenSection = (encodedString) => {
-  const decoder = new TextDecoder();
-  const decodedBytes = base64UrlDecode(encodedString);
-  return JSON.parse(decoder.decode(decodedBytes));
+const parseJWTPayload = (b64EncodedChunk) => {
+  const b = helperBase64Decode(b64EncodedChunk);
+  const textDec = new TextDecoder();
+  return JSON.parse(textDec.decode(b));
 };
 
 async function validateJWT(request) {
@@ -155,10 +159,10 @@ async function validateJWT(request) {
   }
 
   try {
-    const [encodedHeader, encodedPayload, encodedSignature] = extractJWTComponents(token);
+    const [encodedHeader, encodedPayload, encodedSignature] = splitAndValidateJWT(token);
 
-    const tokenHeader = decodeTokenSection(encodedHeader);
-    const tokenPayload = decodeTokenSection(encodedPayload);
+    const tokenHeader = parseJWTPayload(encodedHeader);
+    const tokenPayload = parseJWTPayload(encodedPayload);
 
     // Verify token type and signing algorithm
     if (tokenHeader.alg !== 'RS256') throw new Error(`Unsupported algorithm: ${tokenHeader.alg}`);
@@ -184,7 +188,7 @@ async function validateJWT(request) {
 
     // Verify the signature
     const signedData = new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`);
-    const signatureBytes = base64UrlDecode(encodedSignature);
+    const signatureBytes = helperBase64Decode(encodedSignature);
     const isSignatureValid = await crypto.subtle.verify(
       'RSASSA-PKCS1-v1_5',
       verificationKey,
