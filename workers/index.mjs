@@ -104,44 +104,35 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-const helperBase64Decode = (rawB64) => {
-  const c1 = rawB64.replaceAll('-', '+');
-  const c2 = c1.replaceAll('_', '/');
+const decodeBase64ToUint8Array = (base64Input) => {
+  const normalizedBase64 = base64Input.replace(/-/g, '+').replace(/_/g, '/');
+  const paddingLength = (4 - (normalizedBase64.length % 4)) % 4;
+  const paddedBase64 = normalizedBase64 + '='.repeat(paddingLength);
 
-  const pLen = c2.length % 4;
-  let finalStr = c2;
+  const decodedString = atob(paddedBase64);
+  const buffer = new ArrayBuffer(decodedString.length);
+  const uint8View = new Uint8Array(buffer);
 
-  if (pLen > 0) {
-    if (pLen === 1) {
-      throw new Error('Malformed base64 token');
-    }
-    finalStr = c2 + '='.repeat(4 - pLen);
+  for (let idx = 0; idx < decodedString.length; idx++) {
+    uint8View[idx] = decodedString.charCodeAt(idx);
   }
 
-  const asciiString = atob(finalStr);
-  const outBuffer = new Uint8Array(asciiString.length);
-
-  let i = 0;
-  while (i < asciiString.length) {
-    outBuffer[i] = asciiString.codePointAt(i);
-    i++;
-  }
-
-  return outBuffer;
+  return uint8View;
 };
 
-const splitAndValidateJWT = (fullToken) => {
-  const parts = fullToken.split('.');
-  if (parts.length !== 3) {
-    throw new Error('Token does not have 3 parts');
+const extractJwtParts = (jwtString) => {
+  const tokenParts = jwtString.split('.');
+  if (tokenParts.length !== 3) {
+    throw new Error('Invalid number of token parts');
   }
-  return parts;
+  return tokenParts;
 };
 
-const parseJWTPayload = (b64EncodedChunk) => {
-  const b = helperBase64Decode(b64EncodedChunk);
-  const textDec = new TextDecoder();
-  return JSON.parse(textDec.decode(b));
+const decodeTokenSection = (sectionString) => {
+  const decodedBytes = decodeBase64ToUint8Array(sectionString);
+  const decoder = new TextDecoder('utf-8');
+  const jsonString = decoder.decode(decodedBytes);
+  return JSON.parse(jsonString);
 };
 
 async function validateJWT(request) {
@@ -158,10 +149,10 @@ async function validateJWT(request) {
   }
 
   try {
-    const [encodedHeader, encodedPayload, encodedSignature] = splitAndValidateJWT(token);
+    const [encodedHeader, encodedPayload, encodedSignature] = extractJwtParts(token);
 
-    const tokenHeader = parseJWTPayload(encodedHeader);
-    const tokenPayload = parseJWTPayload(encodedPayload);
+    const tokenHeader = decodeTokenSection(encodedHeader);
+    const tokenPayload = decodeTokenSection(encodedPayload);
 
     // Verify token type and signing algorithm
     if (tokenHeader.alg !== 'RS256') throw new Error(`Unsupported algorithm: ${tokenHeader.alg}`);
@@ -187,7 +178,7 @@ async function validateJWT(request) {
 
     // Verify the signature
     const signedData = new TextEncoder().encode(`${encodedHeader}.${encodedPayload}`);
-    const signatureBytes = helperBase64Decode(encodedSignature);
+    const signatureBytes = decodeBase64ToUint8Array(encodedSignature);
     const isSignatureValid = await crypto.subtle.verify(
       'RSASSA-PKCS1-v1_5',
       verificationKey,
