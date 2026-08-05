@@ -104,18 +104,29 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-const base64UrlDecode = (str) => {
+const base64UrlDecode = (inputString) => {
   // Replace non-url compatible chars with base64 standard chars
-  str = str.replaceAll('-', '+').replaceAll('_', '/');
+  const normalizedStr = inputString.replace(/-/g, '+').replace(/_/g, '/');
 
   // Pad with equal signs
-  const pad = str.length % 4;
-  if(pad) {
-    if(pad === 1) throw new Error('InvalidLengthError');
-    str += new Array(5 - pad).join('=');
+  const padLength = normalizedStr.length % 4;
+  let paddedStr = normalizedStr;
+
+  if (padLength !== 0) {
+    if (padLength === 1) {
+      throw new Error('Invalid base64 encoding length');
+    }
+    paddedStr += '='.repeat(4 - padLength);
   }
 
-  return Uint8Array.from(atob(str), c => c.codePointAt(0));
+  // Convert string to Uint8Array
+  const decodedStr = atob(paddedStr);
+  const arr = new Uint8Array(decodedStr.length);
+  for (let i = 0; i < decodedStr.length; i++) {
+    arr[i] = decodedStr.charCodeAt(i);
+  }
+
+  return arr;
 };
 
 const extractJWTComponents = (tokenString) => {
