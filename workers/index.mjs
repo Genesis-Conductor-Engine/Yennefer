@@ -104,10 +104,16 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+function base64UrlDecode(inputString) {
+  const paddingLength = (4 - (inputString.length % 4)) % 4;
+  const paddedString = inputString.padEnd(inputString.length + paddingLength, '=');
+  const base64String = paddedString.replace(/-/g, '+').replace(/_/g, '/');
+  const decodedData = atob(base64String);
+  const byteArray = new Uint8Array(decodedData.length);
+  for (let i = 0; i < decodedData.length; i++) {
+    byteArray[i] = decodedData.charCodeAt(i);
+  }
+  return byteArray;
 }
 
 async function validateJWT(request) {
