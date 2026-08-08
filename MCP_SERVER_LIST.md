@@ -15,6 +15,7 @@
 | **yennefer-mcp-lite** | `/home/yenn/genesis-q-mem/yennefer_mcp_lite.py` | diamond_vault_status, quantum_operation | diamond://vault, yennefer://soul |
 | **genesis-remote** | `/home/yenn/genesis-q-mem/genesis_remote_mcp.py` | remote_invoke, status_check, batch_dispatch | remote://status |
 | **qmcp-system** | `/home/yenn/genesis-q-mem/qmcp_entry.py` | qmcp_invoke, qflop_query, blockchain_status | qmcp://system |
+| **postman** | `/home/diamondnode/Yennefer/scripts/postman_mcp_server.py` | postman_health, postman_list_workspaces, postman_list_collections, postman_get_collection, postman_list_environments, postman_get_environment, postman_run_collection | postman://workspace, postman://collection, postman://environment |
 | **QMCP** (legacy) | `python qmcp` | * (all) | - |
 
 ### **HTTP-Based MCP Servers** (REST integration)
