@@ -4,7 +4,7 @@ require("dotenv").config();
 const { ethers } = require("ethers");
 
 const CONTRACT_ADDRESS = process.env.GENESIS_CONTRACT_ADDRESS || "0x542db00D9c83F4444cAD5353D1580D97baFaBb50";
-const RPC_URL = process.env.BASE_MAINNET_RPC || "https://base-mainnet.g.alchemy.com/v2/pvAdcefmwvLOK41KxWwmC";
+const RPC_URL = process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || "https://mainnet.base.org";
 
 const ABI = [
   "event CREDIT_PURCHASE(address indexed buyer, uint256 amount)",

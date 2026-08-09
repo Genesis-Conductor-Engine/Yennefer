@@ -6,7 +6,7 @@ const PRIVATE_KEY = process.env.ETH_PRIVATE_KEY || 'YOUR_PRIVATE_KEY_HERE';
 
 module.exports = {
   etherscan: {
-    apiKey: 'F5TARHYEZGKAMV51WCIB281CZEXTNP27F2',
+    apiKey: process.env.BASESCAN_API_KEY || '',
   },
   sourcify: {
     enabled: false,
@@ -24,7 +24,7 @@ module.exports = {
       chainId: 84532,
     },
     baseMainnet: {
-      url: 'https://base-mainnet.g.alchemy.com/v2/pvAdcefmwvLOK41KxWwmC',
+      url: process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || 'https://mainnet.base.org',
       accounts: [PRIVATE_KEY],
       chainId: 8453,
     },

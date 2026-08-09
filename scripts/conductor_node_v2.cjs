@@ -17,7 +17,7 @@ const ABI = [
     "event AssetReceived(address indexed from, uint256 amount)"
 ];
 
-const RPC = process.env.BASE_MAINNET_RPC || "https://mainnet.base.org";
+const RPC = process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || "https://mainnet.base.org";
 
 async function main() {
     console.log("🚀 Genesis Conductor V2 Starting...");

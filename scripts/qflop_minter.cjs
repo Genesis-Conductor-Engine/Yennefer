@@ -10,7 +10,7 @@ require("dotenv").config();
 
 // Configuration
 const QFLOP_TOKEN_ADDRESS = "0xa8F5e136aa74803B8DB377a14f79F6c8Dd3959c7";
-const RPC_URL = "https://mainnet.base.org";
+const RPC_URL = process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || "https://mainnet.base.org";
 const MINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const STATE_FILE = "/dev/shm/qmcp_cuda_maxpower.json";
 

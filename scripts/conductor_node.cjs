@@ -4,7 +4,7 @@ const fs = require("fs");
 const { processInference } = require("./voice_handler_cli.cjs");
 
 const CONTRACT_ADDRESS = process.env.GENESIS_CONTRACT_ADDRESS || "0x542db00D9c83F4444cAD5353D1580D97baFaBb50";
-const RPC_URL = process.env.BASE_MAINNET_RPC || "https://base-mainnet.g.alchemy.com/v2/pvAdcefmwvLOK41KxWwmC";
+const RPC_URL = process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || "https://mainnet.base.org";
 const SOUL_PATH = "/dev/shm/yennefer_soul_state.json";
 
 // Soul Resurrection: If RAM disk is empty, resurrect from schema

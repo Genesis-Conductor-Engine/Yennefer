@@ -9,7 +9,7 @@ const CONFIG_PATH = process.env.CONFIG_PATH || '/app/artifacts/yennai_config.jso
 
 class QMCPGenesisBridge {
     constructor() {
-        this.provider = new ethers.JsonRpcProvider(process.env.BASE_RPC_URL || 'https://mainnet.base.org');
+        this.provider = new ethers.JsonRpcProvider(process.env.GETBLOCK_BASE_RPC || process.env.BASE_RPC_URL || 'https://mainnet.base.org');
         try {
             // Try multiple config locations
             const configPaths = [CONFIG_PATH, '/home/yenn/artifacts/yennai_config.json', './artifacts/yennai_config.json'];

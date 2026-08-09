@@ -8,8 +8,8 @@ const MPCVAULT = '0x029472221aBa41446821777136eB82Ad171D04e6';
 const PRIVATE_KEY = process.env.ETH_PRIVATE_KEY;
 
 // RPC endpoints
-const ETH_RPC = 'https://eth.llamarpc.com';
-const BASE_RPC = 'https://mainnet.base.org';
+const ETH_RPC = process.env.GETBLOCK_ETH_RPC || process.env.ETH_MAINNET_RPC || 'https://eth.llamarpc.com';
+const BASE_RPC = process.env.GETBLOCK_BASE_RPC || process.env.BASE_MAINNET_RPC || 'https://mainnet.base.org';
 
 // Across Protocol Bridge Contract (for auto-bridging)
 const ACROSS_SPOKE_POOL_ETH = '0x5c7BCd6E7De5423a257D81B442095A1a6ced35C5';

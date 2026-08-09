@@ -10,8 +10,8 @@ async function bridgeToBase() {
     console.log('🔷 ETH → Base (OptimismPortal Direct Deposit)');
     console.log('═══════════════════════════════════════════════════════════════');
     
-    const alchemyKey = process.env.BASE_MAINNET_RPC.split('/v2/')[1];
-    const provider = new ethers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`);
+    const ethRpc = process.env.GETBLOCK_ETH_RPC || process.env.ETH_MAINNET_RPC || 'https://eth.llamarpc.com';
+    const provider = new ethers.JsonRpcProvider(ethRpc);
     const pk = process.env.ETH_PRIVATE_KEY;
     
     if (!pk) {
