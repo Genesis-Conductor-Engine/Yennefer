@@ -105,9 +105,20 @@ async function getJWKS() {
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
 function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  // Prevent regex injection / ReDoS by limiting length
+  if (!str || str.length > 8192) throw new Error('JWT component too long');
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (base64.length % 4)) % 4;
+  const padded = base64 + '='.repeat(padLength);
+
+  // Convert base64 to Uint8Array safely
+  const binary_string = atob(padded);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes;
 }
 
 async function validateJWT(request) {
@@ -129,8 +140,15 @@ async function validateJWT(request) {
     const [headerB64, payloadB64, sigB64] = parts;
 
     const dec = new TextDecoder();
-    const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
-    const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+    const decodedHeaderStr = dec.decode(base64UrlDecode(headerB64));
+    const decodedPayloadStr = dec.decode(base64UrlDecode(payloadB64));
+
+    // Validate length before JSON.parse to prevent SonarCloud DoS warnings
+    if (!decodedHeaderStr || decodedHeaderStr.length > 8192) throw new Error('Invalid JWT header length');
+    if (!decodedPayloadStr || decodedPayloadStr.length > 8192) throw new Error('Invalid JWT payload length');
+
+    const header = JSON.parse(decodedHeaderStr);
+    const payload = JSON.parse(decodedPayloadStr);
 
     // Reject unexpected algorithm/type before touching the crypto path to
     // prevent algorithm-confusion attacks and fail fast for auditing.
