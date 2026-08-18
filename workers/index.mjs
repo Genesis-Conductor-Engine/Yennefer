@@ -104,12 +104,6 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-function base64UrlDecode(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-}
-
 async function validateJWT(request) {
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
 
@@ -128,9 +122,11 @@ async function validateJWT(request) {
     if (parts.length !== 3) throw new Error('Malformed JWT');
     const [headerB64, payloadB64, sigB64] = parts;
 
+    const toBuf = s => { const b = atob(s.replace(/-/g,'+').replace(/_/g,'/')); return new Uint8Array(b.length).map((_, i) => b.charCodeAt(i)); };
+
     const dec = new TextDecoder();
-    const header = JSON.parse(dec.decode(base64UrlDecode(headerB64)));
-    const payload = JSON.parse(dec.decode(base64UrlDecode(payloadB64)));
+    const header = JSON.parse(dec.decode(toBuf(headerB64)));
+    const payload = JSON.parse(dec.decode(toBuf(payloadB64)));
 
     // Reject unexpected algorithm/type before touching the crypto path to
     // prevent algorithm-confusion attacks and fail fast for auditing.
@@ -157,7 +153,7 @@ async function validateJWT(request) {
 
     const message = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
     const valid = await crypto.subtle.verify(
-      'RSASSA-PKCS1-v1_5', cryptoKey, base64UrlDecode(sigB64), message,
+      'RSASSA-PKCS1-v1_5', cryptoKey, toBuf(sigB64), message,
     );
     if (!valid) throw new Error('Signature verification failed');
 
