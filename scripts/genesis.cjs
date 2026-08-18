@@ -5,13 +5,14 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -46,6 +47,9 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Add crystalline fractal patterns that grow from the core" },
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
+      { type: "MUTATE", content: "A macro-scale makerspace workbench with a polished light-brown wood table, scattered with passive physics objects like a white cardboard car and alphabet blocks." },
+      { type: "MUTATE", content: "A rugged alien landscape with traversable terrain and reactive dust physics." },
+      { type: "MUTATE", content: "A photorealistic alpine meadow with wildflowers, evergreen pine trees, and a rustic log cabin." }
     ];
     const idx = Math.floor(Date.now() / 1000) % mutations.length;
     directive = mutations[idx];
@@ -154,49 +158,94 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
-  const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
-  ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const directiveLower = directive.toLowerCase();
+  let geometry = '';
 
-  const materials = [
-    `
-      <MeshDistortMaterial
+  if (directiveLower.includes('box') || directiveLower.includes('car') || directiveLower.includes('block') || directiveLower.includes('workbench')) {
+    geometry = '<boxGeometry args={[2, 2, 2]} />';
+  } else if (directiveLower.includes('sphere') || directiveLower.includes('aura') || directiveLower.includes('core')) {
+    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
+  } else if (directiveLower.includes('landscape') || directiveLower.includes('meadow') || directiveLower.includes('terrain') || directiveLower.includes('table')) {
+    geometry = '<planeGeometry args={[10, 10]} rotation={[-Math.PI / 2, 0, 0]} />';
+  } else {
+    const geometries = [
+      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+      '<sphereGeometry args={[1.5, 32, 32]} />',
+      '<boxGeometry args={[2, 2, 2]} />',
+      '<octahedronGeometry args={[1.5, 0]} />',
+      '<icosahedronGeometry args={[1.5, 0]} />'
+    ];
+    geometry = geometries[crypto.randomInt(0, geometries.length)];
+  }
+
+  let material = '';
+  if (directiveLower.includes('wood') || directiveLower.includes('cardboard') || directiveLower.includes('rustic')) {
+    material = `
+      <meshStandardMaterial
+        color="#8B5A2B"
+        roughness={0.9}
+        metalness={0.1}
+      />`;
+  } else if (directiveLower.includes('alien') || directiveLower.includes('dust') || directiveLower.includes('tendril')) {
+    material = `
+      <MeshWobbleMaterial
         color="#8b5cf6"
         emissive="#4c1d95"
         emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-        distort={0.3}
-        speed={2}
-      />`,
-    `
-      <MeshWobbleMaterial
-        color="#06b6d4"
-        emissive="#0e7490"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
+        roughness={0.4}
+        metalness={0.3}
         factor={1}
         speed={2}
-      />`,
-    `
+      />`;
+  } else if (directiveLower.includes('meadow') || directiveLower.includes('pine')) {
+    material = `
       <meshStandardMaterial
-        color="#fbbf24"
-        emissive="#92400e"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.2}
-        metalness={0.8}
-      />`
-  ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+        color="#2E8B57"
+        roughness={0.8}
+        metalness={0.1}
+      />`;
+  } else {
+    const materials = [
+      `
+        <MeshDistortMaterial
+          color="#8b5cf6"
+          emissive="#4c1d95"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          distort={0.3}
+          speed={2}
+        />`,
+      `
+        <MeshWobbleMaterial
+          color="#06b6d4"
+          emissive="#0e7490"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+          factor={1}
+          speed={2}
+        />`,
+      `
+        <meshStandardMaterial
+          color="#fbbf24"
+          emissive="#92400e"
+          emissiveIntensity={0.5 + balance * 2}
+          roughness={0.2}
+          metalness={0.8}
+        />`
+    ];
+    material = materials[crypto.randomInt(0, materials.length)];
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
-  const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
+  let importedDrei = '';
+  if (isDreiImportNeeded) {
+      const imports = [];
+      if (material.includes('MeshDistortMaterial')) imports.push('MeshDistortMaterial');
+      if (material.includes('MeshWobbleMaterial')) imports.push('MeshWobbleMaterial');
+      importedDrei = `import { ${imports.join(', ')} } from '@react-three/drei'`;
+  }
 
   return `// Auto-generated by Yennefer Genesis Cycle
 // Directive: ${directive}
