@@ -156,87 +156,58 @@ async function dispatchTheBuilder(directive) {
   }
 }
 
+// Themed geometry/material presets keyed by directive keywords, with random fallbacks.
+const THEMED_GEOMETRIES = [
+  { keywords: ['box', 'car', 'block', 'workbench'], jsx: '<boxGeometry args={[2, 2, 2]} />' },
+  { keywords: ['sphere', 'aura', 'core'], jsx: '<sphereGeometry args={[1.5, 32, 32]} />' },
+  { keywords: ['landscape', 'meadow', 'terrain', 'table'], jsx: '<planeGeometry args={[10, 10]} rotation={[-Math.PI / 2, 0, 0]} />' }
+];
+
+const FALLBACK_GEOMETRIES = [
+  '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
+  '<sphereGeometry args={[1.5, 32, 32]} />',
+  '<boxGeometry args={[2, 2, 2]} />',
+  '<octahedronGeometry args={[1.5, 0]} />',
+  '<icosahedronGeometry args={[1.5, 0]} />'
+];
+
+// Prop values are pre-formatted JSX attribute values for the generated component.
+const EMISSIVE_PROPS = { emissiveIntensity: '{0.5 + balance * 2}', roughness: '{0.2}', metalness: '{0.8}' };
+
+const THEMED_MATERIALS = [
+  { keywords: ['wood', 'cardboard', 'rustic'], tag: 'meshStandardMaterial', props: { color: '"#8B5A2B"', roughness: '{0.9}', metalness: '{0.1}' } },
+  { keywords: ['alien', 'dust', 'tendril'], tag: 'MeshWobbleMaterial', props: { color: '"#8b5cf6"', emissive: '"#4c1d95"', emissiveIntensity: '{0.5 + balance * 2}', roughness: '{0.4}', metalness: '{0.3}', factor: '{1}', speed: '{2}' } },
+  { keywords: ['meadow', 'pine'], tag: 'meshStandardMaterial', props: { color: '"#2E8B57"', roughness: '{0.8}', metalness: '{0.1}' } }
+];
+
+const FALLBACK_MATERIALS = [
+  { tag: 'MeshDistortMaterial', props: { color: '"#8b5cf6"', emissive: '"#4c1d95"', ...EMISSIVE_PROPS, distort: '{0.3}', speed: '{2}' } },
+  { tag: 'MeshWobbleMaterial', props: { color: '"#06b6d4"', emissive: '"#0e7490"', ...EMISSIVE_PROPS, factor: '{1}', speed: '{2}' } },
+  { tag: 'meshStandardMaterial', props: { color: '"#fbbf24"', emissive: '"#92400e"', ...EMISSIVE_PROPS } }
+];
+
+function matchesDirective(preset, directiveLower) {
+  return preset.keywords.some((keyword) => directiveLower.includes(keyword));
+}
+
+function renderMaterial({ tag, props }) {
+  const attrs = Object.entries(props)
+    .map(([key, value]) => `        ${key}=${value}`)
+    .join('\n');
+  return `\n      <${tag}\n${attrs}\n      />`;
+}
+
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
   const directiveLower = directive.toLowerCase();
-  let geometry = '';
 
-  if (directiveLower.includes('box') || directiveLower.includes('car') || directiveLower.includes('block') || directiveLower.includes('workbench')) {
-    geometry = '<boxGeometry args={[2, 2, 2]} />';
-  } else if (directiveLower.includes('sphere') || directiveLower.includes('aura') || directiveLower.includes('core')) {
-    geometry = '<sphereGeometry args={[1.5, 32, 32]} />';
-  } else if (directiveLower.includes('landscape') || directiveLower.includes('meadow') || directiveLower.includes('terrain') || directiveLower.includes('table')) {
-    geometry = '<planeGeometry args={[10, 10]} rotation={[-Math.PI / 2, 0, 0]} />';
-  } else {
-    const geometries = [
-      '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-      '<sphereGeometry args={[1.5, 32, 32]} />',
-      '<boxGeometry args={[2, 2, 2]} />',
-      '<octahedronGeometry args={[1.5, 0]} />',
-      '<icosahedronGeometry args={[1.5, 0]} />'
-    ];
-    geometry = geometries[crypto.randomInt(0, geometries.length)];
-  }
+  const themedGeometry = THEMED_GEOMETRIES.find((preset) => matchesDirective(preset, directiveLower));
+  const geometry = themedGeometry
+    ? themedGeometry.jsx
+    : FALLBACK_GEOMETRIES[crypto.randomInt(0, FALLBACK_GEOMETRIES.length)];
 
-  let material = '';
-  if (directiveLower.includes('wood') || directiveLower.includes('cardboard') || directiveLower.includes('rustic')) {
-    material = `
-      <meshStandardMaterial
-        color="#8B5A2B"
-        roughness={0.9}
-        metalness={0.1}
-      />`;
-  } else if (directiveLower.includes('alien') || directiveLower.includes('dust') || directiveLower.includes('tendril')) {
-    material = `
-      <MeshWobbleMaterial
-        color="#8b5cf6"
-        emissive="#4c1d95"
-        emissiveIntensity={0.5 + balance * 2}
-        roughness={0.4}
-        metalness={0.3}
-        factor={1}
-        speed={2}
-      />`;
-  } else if (directiveLower.includes('meadow') || directiveLower.includes('pine')) {
-    material = `
-      <meshStandardMaterial
-        color="#2E8B57"
-        roughness={0.8}
-        metalness={0.1}
-      />`;
-  } else {
-    const materials = [
-      `
-        <MeshDistortMaterial
-          color="#8b5cf6"
-          emissive="#4c1d95"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-          distort={0.3}
-          speed={2}
-        />`,
-      `
-        <MeshWobbleMaterial
-          color="#06b6d4"
-          emissive="#0e7490"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-          factor={1}
-          speed={2}
-        />`,
-      `
-        <meshStandardMaterial
-          color="#fbbf24"
-          emissive="#92400e"
-          emissiveIntensity={0.5 + balance * 2}
-          roughness={0.2}
-          metalness={0.8}
-        />`
-    ];
-    material = materials[crypto.randomInt(0, materials.length)];
-  }
+  const themedMaterial = THEMED_MATERIALS.find((preset) => matchesDirective(preset, directiveLower));
+  const material = renderMaterial(themedMaterial || FALLBACK_MATERIALS[crypto.randomInt(0, FALLBACK_MATERIALS.length)]);
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   let importedDrei = '';
