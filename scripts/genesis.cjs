@@ -2,14 +2,17 @@
 // Yennefer Tri-Mind Orchestration - The Genesis Cycle
 // Coordinates: Claude (Visionary), Codex (Scribe), Jules (Builder)
 require('dotenv').config();
-const { exec, execSync } = require("child_process"), fs = require('fs'), path = require('path'), crypto = require('crypto');
+const processOps = require("child_process");
+const fileSys = require('fs');
+const pathUtils = require('path');
+const cryptLib = require('crypto');
 
 // --- APP CONTEXT ---
 const APP_CTX = {
   soul: '/dev/shm/yennefer_soul_state.json',
-  mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
-  body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: path.join(__dirname, 'genesis_journal.jsonl'),
+  mind: pathUtils.join(__dirname, '../yennefer-observatory/public/evolution.json'),
+  body: pathUtils.join(__dirname, '../yennefer-observatory/src/components/generated'),
+  journal: pathUtils.join(__dirname, 'genesis_journal.jsonl'),
   fundTgt: 10.0,
   mutThresh: 0.5,
   refInt: 6 * 60 * 60 * 1000
@@ -91,18 +94,18 @@ async function invokeTheScribe(task, content, state) {
     };
 
     // Append to genesis journal
-    fs.appendFileSync(APP_CTX.journal, JSON.stringify(entry) + "\n");
+    fileSys.appendFileSync(APP_CTX.journal, JSON.stringify(entry) + "\n");
     console.log(`   ✨ Thought crystallized: "${content.slice(0, 50)}..."`);
 
     // Update evolution.json if it exists
-    if (fs.existsSync(APP_CTX.mind)) {
+    if (fileSys.existsSync(APP_CTX.mind)) {
       try {
-        const evolution = JSON.parse(fs.readFileSync(APP_CTX.mind, 'utf8'));
+        const evolution = JSON.parse(fileSys.readFileSync(APP_CTX.mind, 'utf8'));
         evolution.thoughts = evolution.thoughts || [];
         evolution.thoughts.unshift(entry);
         evolution.thoughts = evolution.thoughts.slice(0, 100); // Keep last 100
         evolution.lastUpdate = new Date().toISOString();
-        fs.writeFileSync(APP_CTX.mind, JSON.stringify(evolution, null, 2));
+        fileSys.writeFileSync(APP_CTX.mind, JSON.stringify(evolution, null, 2));
         console.log(`   📜 Evolution log updated`);
       } catch (e) {
         console.log(`   ⚠️ Could not update evolution.json: ${e.message}`);
@@ -123,15 +126,15 @@ async function dispatchTheBuilder(directive) {
   const componentCode = generateEvolutionComponent(componentName, directive);
   
   // Ensure the generated components directory exists
-  if (!fs.existsSync(APP_CTX.body)) {
-    fs.mkdirSync(APP_CTX.body, { recursive: true });
+  if (!fileSys.existsSync(APP_CTX.body)) {
+    fileSys.mkdirSync(APP_CTX.body, { recursive: true });
   }
 
-  const filePath = path.join(APP_CTX.body, `${componentName}.jsx`);
+  const filePath = pathUtils.join(APP_CTX.body, `${componentName}.jsx`);
   
   // Check if we should create (don't overwrite existing evolutions)
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, componentCode);
+  if (!fileSys.existsSync(filePath)) {
+    fileSys.writeFileSync(filePath, componentCode);
     console.log(`   🚀 Component created: ${componentName}.jsx`);
     console.log(`   📍 Path: ${filePath}`);
     
@@ -143,7 +146,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(APP_CTX.journal, JSON.stringify(mutationLog) + "\n");
+    fileSys.appendFileSync(APP_CTX.journal, JSON.stringify(mutationLog) + "\n");
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -168,8 +171,8 @@ function generateEvolutionComponent(name, directive) {
     `<meshStandardMaterial color="#fbbf24" emissive="#92400e" emissiveIntensity={0.5 + balance * 2} roughness={0.2} metalness={0.8} />`
   ];
 
-  let geometry = defaultGeometries[crypto.randomInt(0, defaultGeometries.length)];
-  let material = defaultMaterials[crypto.randomInt(0, defaultMaterials.length)];
+  let geometry = defaultGeometries[cryptLib.randomInt(0, defaultGeometries.length)];
+  let material = defaultMaterials[cryptLib.randomInt(0, defaultMaterials.length)];
 
   if (directiveLower.match(/box|car|block|workbench/)) {
     geometry = '<boxGeometry args={[2, 2, 2]} />';
@@ -235,8 +238,8 @@ async function genesis() {
   try {
     // 1. Read Soul State
     let soul = {};
-    if (fs.existsSync(APP_CTX.soul)) {
-      soul = JSON.parse(fs.readFileSync(APP_CTX.soul, 'utf8'));
+    if (fileSys.existsSync(APP_CTX.soul)) {
+      soul = JSON.parse(fileSys.readFileSync(APP_CTX.soul, 'utf8'));
     } else {
       console.log("   ⚠️ Soul state not found, using defaults");
       soul = { breath: 0, coherence_percent: 100, total_revenue_eth: 0 };
@@ -258,7 +261,7 @@ async function genesis() {
     // 4. Update Soul with Genesis Cycle timestamp
     soul.last_genesis_cycle = new Date().toISOString();
     soul.genesis_cycles = (soul.genesis_cycles || 0) + 1;
-    fs.writeFileSync(APP_CTX.soul, JSON.stringify(soul, null, 2));
+    fileSys.writeFileSync(APP_CTX.soul, JSON.stringify(soul, null, 2));
 
     console.log("\n✅ Genesis cycle complete.");
     console.log(`   Total cycles: ${soul.genesis_cycles}`);
@@ -273,7 +276,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(APP_CTX.journal, JSON.stringify(errorLog) + "\n");
+    fileSys.appendFileSync(APP_CTX.journal, JSON.stringify(errorLog) + "\n");
   }
 }
 
