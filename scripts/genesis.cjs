@@ -16,7 +16,7 @@ const PATHS = {
 };
 
 function writeJournal(entry) {
-  writeJournal(entry);
+  fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
 }
 
 // --- CONFIGURATION ---
@@ -157,6 +157,16 @@ async function dispatchTheBuilder(directive) {
   }
 }
 
+// Pick an option whose keywords appear in the directive, or a random one as fallback
+function selectByKeyword(lowerDirective, options, keywordMap) {
+  for (const [keywords, index] of keywordMap) {
+    if (keywords.some(keyword => lowerDirective.includes(keyword))) {
+      return options[index];
+    }
+  }
+  return options[crypto.randomInt(options.length)];
+}
+
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
   const geometries = [
@@ -167,20 +177,13 @@ function generateEvolutionComponent(name, directive) {
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
   const lowerDirective = typeof directive === 'string' ? directive.toLowerCase() : (directive.content || '').toLowerCase();
-  let geometry;
-  if (lowerDirective.includes("box") || lowerDirective.includes("cube")) {
-    geometry = geometries[2];
-  } else if (lowerDirective.includes("sphere") || lowerDirective.includes("orb")) {
-    geometry = geometries[1];
-  } else if (lowerDirective.includes("torus") || lowerDirective.includes("knot")) {
-    geometry = geometries[0];
-  } else if (lowerDirective.includes("octahedron")) {
-    geometry = geometries[3];
-  } else if (lowerDirective.includes("icosahedron")) {
-    geometry = geometries[4];
-  } else {
-    geometry = geometries[crypto.randomInt(geometries.length)];
-  }
+  const geometry = selectByKeyword(lowerDirective, geometries, [
+    [["box", "cube"], 2],
+    [["sphere", "orb"], 1],
+    [["torus", "knot"], 0],
+    [["octahedron"], 3],
+    [["icosahedron"], 4]
+  ]);
 
   const materials = [
     `
@@ -213,16 +216,11 @@ function generateEvolutionComponent(name, directive) {
       />`
   ];
 
-  let material;
-  if (lowerDirective.includes("distort")) {
-    material = materials[0];
-  } else if (lowerDirective.includes("wobble")) {
-    material = materials[1];
-  } else if (lowerDirective.includes("standard") || lowerDirective.includes("glow")) {
-    material = materials[2];
-  } else {
-    material = materials[crypto.randomInt(materials.length)];
-  }
+  const material = selectByKeyword(lowerDirective, materials, [
+    [["distort"], 0],
+    [["wobble"], 1],
+    [["standard", "glow"], 2]
+  ]);
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
