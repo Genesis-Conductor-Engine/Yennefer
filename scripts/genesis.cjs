@@ -161,14 +161,22 @@ async function dispatchTheBuilder(directive) {
 const generateEvolutionComponent = (n, d) => {
   const S = (typeof d==='string'?d:d.content||'').toLowerCase();
 
-  const gI = S.includes('box')||S.includes('cube') ? 2 : S.includes('sphere')||S.includes('orb') ? 1 : S.includes('torus')||S.includes('knot') ? 0 : S.includes('octa') ? 3 : S.includes('icos') ? 4 : crypto.randomInt(5);
-  const G = ['<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />','<sphereGeometry args={[1.5, 32, 32]} />','<boxGeometry args={[2, 2, 2]} />','<octahedronGeometry args={[1.5, 0]} />','<icosahedronGeometry args={[1.5, 0]} />'][gI];
+  const hA = (A,B,C) => S.includes(A) || S.includes(B) ? C : null;
+  const gI = hA('box','cube',2) ?? hA('sphere','orb',1) ?? hA('torus','knot',0) ?? hA('octa','hedr',3) ?? hA('icos','hedr',4) ?? crypto.randomInt(5);
 
-  const mI = S.includes('distort') ? 0 : S.includes('wobble') ? 1 : S.includes('stand')||S.includes('glow') ? 2 : crypto.randomInt(3);
-  const M = ['<MeshDistortMaterial color="#8b5cf6" emissive="#4c1d95" emissiveIntensity={0.5+balance*2} roughness={0.2} metalness={0.8} distort={0.3} speed={2}/>','<MeshWobbleMaterial color="#06b6d4" emissive="#0e7490" emissiveIntensity={0.5+balance*2} roughness={0.2} metalness={0.8} factor={1} speed={2}/>','<meshStandardMaterial color="#fbbf24" emissive="#92400e" emissiveIntensity={0.5+balance*2} roughness={0.2} metalness={0.8}/>'][mI];
+  const gTag = ['torusKnot', 'sphere', 'box', 'octahedron', 'icosahedron'][gI];
+  const gArg = ['[1.5, 0.4, 128, 32]', '[1.5, 32, 32]', '[2, 2, 2]', '[1.5, 0]', '[1.5, 0]'][gI];
+  const G = `<${gTag}Geometry args={${gArg}} />`;
 
-  const I = mI === 0 ? 'MeshDistortMaterial' : mI === 1 ? 'MeshWobbleMaterial' : '';
-  const dImp = I ? `import { ${I} } from '@react-three/drei'` : '';
+  const mI = hA('distort','warp',0) ?? hA('wobble','shake',1) ?? hA('stand','glow',2) ?? crypto.randomInt(3);
+
+  const mTag = ['MeshDistortMaterial', 'MeshWobbleMaterial', 'meshStandardMaterial'][mI];
+  const mCol = ['#8b5cf6', '#06b6d4', '#fbbf24'][mI];
+  const mEmi = ['#4c1d95', '#0e7490', '#92400e'][mI];
+  const mExt = ['distort={0.3} speed={2}', 'factor={1} speed={2}', ''][mI];
+  const M = `<${mTag} color="${mCol}" emissive="${mEmi}" emissiveIntensity={0.5+balance*2} roughness={0.2} metalness={0.8} ${mExt}/>`;
+
+  const dImp = mI < 2 ? `import { ${mTag} } from '@react-three/drei'` : '';
 
   return `import React, { useRef } from 'react'\nimport { useFrame } from '@react-three/fiber'\n${dImp}\nexport default function ${n}({ balance = 0 }) {\n  const r = useRef();\n  useFrame((s) => {\n    if(r.current) {\n      r.current.rotation.y += 0.002;\n      r.current.rotation.x = Math.sin(s.clock.elapsedTime * 0.5) * 0.1;\n      r.current.scale.setScalar(1 + Math.min(1, balance * 10) * 0.2);\n    }\n  });\n  return (<mesh ref={r} position={[0, 0, 0]}>${G}${M}</mesh>);\n}`;
 };
