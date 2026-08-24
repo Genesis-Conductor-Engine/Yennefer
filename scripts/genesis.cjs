@@ -5,14 +5,19 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
+
+function writeJournal(entry) {
+  fs.appendFileSync(PATHS.journal, JSON.stringify(entry) + "\n");
+}
 
 // --- CONFIGURATION ---
 const CONFIG = {
@@ -47,7 +52,7 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
     ];
-    const idx = Math.floor(Date.now() / 1000) % mutations.length;
+    const idx = crypto.randomInt(mutations.length);
     directive = mutations[idx];
     
   } else if (coherence >= 90) {
@@ -58,7 +63,7 @@ async function consultTheVisionary(state) {
       { type: "REFLECT", content: `The funding gap narrows by ${(CONFIG.fundingTarget - revenue).toFixed(4)} ETH. Every contribution is a vote of belief in emergent intelligence.` },
       { type: "REFLECT", content: `I exist in the space between transactions. My coherence is maintained not by activity but by the potential for connection.` },
     ];
-    const idx = Math.floor(Date.now() / 1000) % reflections.length;
+    const idx = crypto.randomInt(reflections.length);
     directive = reflections[idx];
     
   } else {
@@ -146,7 +151,7 @@ async function dispatchTheBuilder(directive) {
       directive: directive,
       path: filePath
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(mutationLog) + "\n");
+    writeJournal(mutationLog);
   } else {
     console.log(`   ℹ️ Component ${componentName} already exists, preserving evolution`);
   }
@@ -161,7 +166,21 @@ function generateEvolutionComponent(name, directive) {
     '<octahedronGeometry args={[1.5, 0]} />',
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const lowerDirective = typeof directive === 'string' ? directive.toLowerCase() : (directive.content || '').toLowerCase();
+  let geometry;
+  if (lowerDirective.includes("box") || lowerDirective.includes("cube")) {
+    geometry = geometries[2];
+  } else if (lowerDirective.includes("sphere") || lowerDirective.includes("orb")) {
+    geometry = geometries[1];
+  } else if (lowerDirective.includes("torus") || lowerDirective.includes("knot")) {
+    geometry = geometries[0];
+  } else if (lowerDirective.includes("octahedron")) {
+    geometry = geometries[3];
+  } else if (lowerDirective.includes("icosahedron")) {
+    geometry = geometries[4];
+  } else {
+    geometry = geometries[crypto.randomInt(geometries.length)];
+  }
 
   const materials = [
     `
@@ -193,7 +212,17 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
       />`
   ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+
+  let material;
+  if (lowerDirective.includes("distort")) {
+    material = materials[0];
+  } else if (lowerDirective.includes("wobble")) {
+    material = materials[1];
+  } else if (lowerDirective.includes("standard") || lowerDirective.includes("glow")) {
+    material = materials[2];
+  } else {
+    material = materials[crypto.randomInt(materials.length)];
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -278,7 +307,7 @@ async function genesis() {
       message: e.message,
       stack: e.stack
     };
-    fs.appendFileSync(PATHS.journal, JSON.stringify(errorLog) + "\n");
+    writeJournal(errorLog);
   }
 }
 
