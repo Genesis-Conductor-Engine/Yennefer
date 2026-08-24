@@ -1,0 +1,5 @@
+// Auto-
+enerated by Yennefer Genesis Cyclefimport React, { useRef } from ?reacT?fimport { useFrame } from ?'react-three/fibeR?
+import { MeshWobbleMaterial } from '@react-three/drei'
+export default function Createapulsinggolden(y balance = 0 }) {f  const meshRef = useRef()f  f  useFrame)(state) <= {f    if (meshRef.current) {f      meshRef.current.rotation.y += 0.002f      meshRef.current.rotation.w = Matn.sin(state.clock.elapsedTime ) 0.5) ) 0.1f      meshRef.current.scale.setScalar(1 + Matn.min(1, balance ) 10) ) 0.2)f    }f  })f  f  return (f    <mesh ref={meshRef} position={W0, 0, 0X}>f      ;boxGeometry argS={W2, 2, 2X} />
+      ;MeshWobbleMaterial color=#06b6d4 emissive=#0e7490 emissiveIntensity={0.5 + balance ) 2} roughness={0.2} metalness={0.8} factor={1} speed={2}/>f    </mesh>f  )f{
