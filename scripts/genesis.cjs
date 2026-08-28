@@ -5,14 +5,13 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: path.join(__dirname, 'genesis_journal.jsonl')
+  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
 };
 
 // --- CONFIGURATION ---
@@ -162,7 +161,7 @@ function generateEvolutionComponent(name, directive) {
     '<octahedronGeometry args={[1.5, 0]} />',
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
-  const geometry = geometries[crypto.randomInt(geometries.length)];
+  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
 
   const materials = [
     `
@@ -194,7 +193,7 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
       />`
   ];
-  const material = materials[crypto.randomInt(materials.length)];
+  const material = materials[Math.floor(Math.random() * materials.length)];
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
