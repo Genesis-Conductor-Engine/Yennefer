@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "hardhat test",
-    "build": "cd frontend && npm run build",
+    "build": "echo 'No build step required'",
     "worker:dev": "wrangler dev",
     "worker:deploy": "wrangler deploy --env production",
     "worker:deploy:staging": "wrangler deploy --env staging"
