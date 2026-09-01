@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://genesisconductor.io/schemas/cycle_proof.schema.json",
+  "title": "CycleProof",
+  "type": "object",
+  "required": ["cycle_id", "envelope_version", "thermodynamic_report", "serialized_payload", "payload_digest"],
+  "properties": {
+    "cycle_id": { "type": "string" },
+    "envelope_version": { "const": "0.3.0" },
+    "serialized_payload": { "type": "string" },
+    "payload_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "thermodynamic_report": {
+      "type": "object",
+      "required": ["cycle_id", "observed_route", "optimal_route", "route_scores", "inversion_gap", "regret_eth", "confidence", "caveats"]
+    }
+  }
+}
