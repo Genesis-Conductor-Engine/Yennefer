@@ -1,0 +1,10 @@
+{
+  "cycle_id": "cycle-yennefer-thermo-example-001",
+  "observed_route": {"id": "obs-base-mainnet-direct", "hops": ["wallet", "router", "base-rpc", "settlement"], "cost_eth": 0.0042, "latency_ms": 820, "drag": 0.31},
+  "candidate_routes": [
+    {"id": "opt-batch-l2-relay", "hops": ["wallet", "batcher", "l2-relay", "settlement"], "cost_eth": 0.0016, "latency_ms": 540, "drag": 0.12},
+    {"id": "opt-x402-direct", "hops": ["wallet", "x402", "settlement"], "cost_eth": 0.0019, "latency_ms": 410, "drag": 0.15}
+  ],
+  "quote_evidence": null,
+  "policy_gates": {"checkout_sessions_enabled": false, "live_quotes_required": true}
+}

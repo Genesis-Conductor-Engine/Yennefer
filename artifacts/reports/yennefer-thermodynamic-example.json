@@ -1,0 +1,33 @@
+{
+  "envelope_version": "0.3.0",
+  "handoff_id": "genesis-yennefer-thermodynamic-daemon-2026-05-03",
+  "generated_at": "2026-08-29T16:45:00Z",
+  "cycle_id": "yenn.eta.example.2026-08-29",
+  "observed_route": {
+    "id": "unverified",
+    "cost_eth": null,
+    "latency_ms": null,
+    "evidence": "none_in_sandbox"
+  },
+  "optimal_route": {
+    "id": "advisory_only",
+    "cost_eth": null,
+    "latency_ms": null,
+    "source": "simulated_projection"
+  },
+  "route_scores": {
+    "observed": 0.0,
+    "optimal": 0.0,
+    "eta_thermo": 0.0
+  },
+  "inversion_gap": 0.0,
+  "regret_eth": 0.0,
+  "confidence": 0.0,
+  "checkout_sessions_gate": "deny",
+  "caveats": [
+    "simulated_projection is advisory until backed by live quote evidence and policy gates",
+    "No live route quotes were available in this sandbox",
+    "Biological terms in doctrine pages are analogies only",
+    "Do not use this example for production checkout-sessions activation"
+  ]
+}
