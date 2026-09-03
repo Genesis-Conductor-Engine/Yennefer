@@ -1,15 +1,12 @@
 name            = "yennefer"
-main            = "workers/index.js"
-compatibility_date  = "2024-09-23"
+main            = "workers/index.mjs"
+compatibility_date  = "2024-04-01"
 compatibility_flags = ["nodejs_compat"]
 
 # ─── Build step ──────────────────────────────────────────────────────────────
 # Runs before `wrangler deploy` so frontend/build exists when assets are uploaded.
 [build]
-# Installs frontend deps and builds the SPA so frontend/build exists before
-# `wrangler deploy` uploads assets.  NODE_OPTIONS is required for
-# react-scripts 5.x + Node 18+ (webpack 4 OpenSSL 3.0 compatibility).
-command = "cd frontend && npm install --include=dev && GENERATE_SOURCEMAP=false CI=false NODE_OPTIONS=--openssl-legacy-provider npm run build"
+command = "cd yennefer-observatory && npm install --legacy-peer-deps && npm run build"
 
 # ─── Static Assets (React SPA build output) ──────────────────────────────────
 # Built by `npm run build` (root package.json) before every `wrangler deploy`.
@@ -17,12 +14,8 @@ command = "cd frontend && npm install --include=dev && GENERATE_SOURCEMAP=false 
 # The ASSETS binding serves the React bundle with proper cache headers and
 # falls back to index.html for client-side routing.
 [assets]
-directory = "frontend/build"
+directory = "yennefer-observatory/dist"
 binding   = "ASSETS"
-
-# ─── Placement ───────────────────────────────────────────────────────────────
-[placement]
-mode = "smart"
 
 # ─── Production environment (yennefer.quest) ─────────────────────────────────
 # BACKEND_URL is set as a Cloudflare Worker secret (not a plain var) so it
