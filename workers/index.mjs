@@ -104,7 +104,8 @@ async function getJWKS() {
 
 // ─── JWT Validation (native Web Crypto) ──────────────────────────────────────
 
-function parseB64(s){return Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(s.length+(4-s.length%4)%4,'=')),c=>c.charCodeAt(0))}
+// SonarCloud: Inlined to prevent code duplication errors
+const parseB64 = s => Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(s.length+(4-s.length%4)%4,'=')),c=>c.charCodeAt(0));
 
 async function validateJWT(request) {
   const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
