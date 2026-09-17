@@ -5,13 +5,14 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -154,17 +155,33 @@ async function dispatchTheBuilder(directive) {
 
 // Generate React Three Fiber component code
 function generateEvolutionComponent(name, directive) {
+  const directiveText = typeof directive === 'object' && directive.content ? directive.content.toLowerCase() : String(directive).toLowerCase();
+
   const geometries = [
-    '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />',
-    '<sphereGeometry args={[1.5, 32, 32]} />',
-    '<boxGeometry args={[2, 2, 2]} />',
-    '<octahedronGeometry args={[1.5, 0]} />',
-    '<icosahedronGeometry args={[1.5, 0]} />'
+    { key: 'torusknot', code: '<torusKnotGeometry args={[1.5, 0.4, 128, 32]} />' },
+    { key: 'sphere', code: '<sphereGeometry args={[1.5, 32, 32]} />' },
+    { key: 'box', code: '<boxGeometry args={[2, 2, 2]} />' },
+    { key: 'octahedron', code: '<octahedronGeometry args={[1.5, 0]} />' },
+    { key: 'icosahedron', code: '<icosahedronGeometry args={[1.5, 0]} />' },
+    { key: 'landscape', code: '<planeGeometry args={[10, 10, 32, 32]} />' },
+    { key: 'makerspace', code: '<boxGeometry args={[10, 0.5, 10]} />' }
   ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+
+  let geometry = '';
+  for (const geom of geometries) {
+    if (directiveText.includes(geom.key)) {
+      geometry = geom.code;
+      break;
+    }
+  }
+  if (!geometry) {
+    geometry = geometries[crypto.randomInt(0, 5)].code; // default 5 geometries
+  }
 
   const materials = [
-    `
+    {
+      key: 'distort',
+      code: `
       <MeshDistortMaterial
         color="#8b5cf6"
         emissive="#4c1d95"
@@ -173,8 +190,11 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
         distort={0.3}
         speed={2}
-      />`,
-    `
+      />`
+    },
+    {
+      key: 'wobble',
+      code: `
       <MeshWobbleMaterial
         color="#06b6d4"
         emissive="#0e7490"
@@ -183,8 +203,11 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
         factor={1}
         speed={2}
-      />`,
-    `
+      />`
+    },
+    {
+      key: 'standard',
+      code: `
       <meshStandardMaterial
         color="#fbbf24"
         emissive="#92400e"
@@ -192,8 +215,28 @@ function generateEvolutionComponent(name, directive) {
         roughness={0.2}
         metalness={0.8}
       />`
+    },
+    {
+      key: 'wood',
+      code: `
+      <meshStandardMaterial
+        color="#8b5a2b"
+        roughness={0.9}
+        metalness={0.1}
+      />`
+    }
   ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+
+  let material = '';
+  for (const mat of materials) {
+    if (directiveText.includes(mat.key)) {
+      material = mat.code;
+      break;
+    }
+  }
+  if (!material) {
+    material = materials[crypto.randomInt(0, 3)].code; // default 3 materials
+  }
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
