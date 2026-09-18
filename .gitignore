@@ -33,3 +33,6 @@ gha-creds-*.json
 # --- Build output ---
 frontend/build/
 node_modules/
+scripts/genesis_journal.jsonl
+yennefer-observatory/dist/
+yennefer-observatory/src/components/generated/*.jsx
