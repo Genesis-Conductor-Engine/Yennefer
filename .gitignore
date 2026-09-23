@@ -26,6 +26,7 @@ logs/
 *.log
 *.pm2
 .pm2/
+scripts/genesis_journal.jsonl
 
 .gemini/
 gha-creds-*.json
@@ -33,3 +34,5 @@ gha-creds-*.json
 # --- Build output ---
 frontend/build/
 node_modules/
+yennefer-observatory/dist/
+yennefer-observatory/src/components/generated/*.jsx
