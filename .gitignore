@@ -36,3 +36,4 @@ yennefer-observatory/dist/
 node_modules/
 *.jsonl
 yennefer-observatory/src/components/generated/
+.wrangler/
