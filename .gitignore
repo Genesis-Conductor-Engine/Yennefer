@@ -32,4 +32,5 @@ gha-creds-*.json
 
 # --- Build output ---
 frontend/build/
+yennefer-observatory/dist/
 node_modules/
