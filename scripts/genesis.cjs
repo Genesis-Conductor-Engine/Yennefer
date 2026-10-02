@@ -287,18 +287,21 @@ async function genesis() {
 async function main() {
   if (process.env.GENESIS_LOOP === 'true') {
     console.log("🔄 Running in continuous Genesis Loop mode...");
-    while (true) {
-      await genesis();
+    let running = true;
+    while (running) {
+      await genesis().catch(err => console.error(err));
       // Wait for reflectionInterval or 5 minutes
       const waitTime = CONFIG.reflectionInterval || 5 * 60 * 1000;
       console.log(`\n⏳ Genesis cycle sleeping for ${waitTime / 1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise(resolve => {
+        setTimeout(resolve, waitTime);
+      });
     }
   } else {
-    await genesis();
+    await genesis().catch(err => console.error(err));
   }
 }
 
-main();
+main().catch(err => console.error(err));
 
-module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
+module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder, main };
