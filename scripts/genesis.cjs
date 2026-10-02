@@ -5,13 +5,14 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -161,7 +162,7 @@ function generateEvolutionComponent(name, directive) {
     '<octahedronGeometry args={[1.5, 0]} />',
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const geometry = geometries[crypto.randomInt(geometries.length)];
 
   const materials = [
     `
@@ -193,7 +194,7 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
       />`
   ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+  const material = materials[crypto.randomInt(materials.length)];
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -286,18 +287,21 @@ async function genesis() {
 async function main() {
   if (process.env.GENESIS_LOOP === 'true') {
     console.log("🔄 Running in continuous Genesis Loop mode...");
-    while (true) {
-      await genesis();
+    let running = true;
+    while (running) {
+      await genesis().catch(err => console.error(err));
       // Wait for reflectionInterval or 5 minutes
       const waitTime = CONFIG.reflectionInterval || 5 * 60 * 1000;
       console.log(`\n⏳ Genesis cycle sleeping for ${waitTime / 1000} seconds...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise(resolve => {
+        setTimeout(resolve, waitTime);
+      });
     }
   } else {
-    await genesis();
+    await genesis().catch(err => console.error(err));
   }
 }
 
-main();
+main().catch(err => console.error(err));
 
-module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
+module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder, main };
