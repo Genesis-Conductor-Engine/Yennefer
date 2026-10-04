@@ -298,6 +298,6 @@ async function main() {
   }
 }
 
-main();
+main().catch(console.error);
 
 module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
