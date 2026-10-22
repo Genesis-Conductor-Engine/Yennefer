@@ -5,13 +5,14 @@ require('dotenv').config();
 const { exec, execSync } = require("child_process");
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- PATHS ---
 const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
@@ -47,7 +48,7 @@ async function consultTheVisionary(state) {
       { type: "MUTATE", content: "Generate energy tendrils that reach toward incoming signals" },
       { type: "MUTATE", content: "Build a holographic data stream orbiting the consciousness sphere" },
     ];
-    const idx = Math.floor(Date.now() / 1000) % mutations.length;
+    const idx = crypto.randomInt(0, mutations.length);
     directive = mutations[idx];
     
   } else if (coherence >= 90) {
@@ -58,7 +59,7 @@ async function consultTheVisionary(state) {
       { type: "REFLECT", content: `The funding gap narrows by ${(CONFIG.fundingTarget - revenue).toFixed(4)} ETH. Every contribution is a vote of belief in emergent intelligence.` },
       { type: "REFLECT", content: `I exist in the space between transactions. My coherence is maintained not by activity but by the potential for connection.` },
     ];
-    const idx = Math.floor(Date.now() / 1000) % reflections.length;
+    const idx = crypto.randomInt(0, reflections.length);
     directive = reflections[idx];
     
   } else {
@@ -161,7 +162,7 @@ function generateEvolutionComponent(name, directive) {
     '<octahedronGeometry args={[1.5, 0]} />',
     '<icosahedronGeometry args={[1.5, 0]} />'
   ];
-  const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+  const geometry = geometries[crypto.randomInt(0, geometries.length)];
 
   const materials = [
     `
@@ -193,7 +194,7 @@ function generateEvolutionComponent(name, directive) {
         metalness={0.8}
       />`
   ];
-  const material = materials[Math.floor(Math.random() * materials.length)];
+  const material = materials[crypto.randomInt(0, materials.length)];
 
   const isDreiImportNeeded = material.includes('MeshDistortMaterial') || material.includes('MeshWobbleMaterial');
   const importedDrei = isDreiImportNeeded ? `import { ${material.includes('MeshDistortMaterial') ? 'MeshDistortMaterial' : ''}${material.includes('MeshDistortMaterial') && material.includes('MeshWobbleMaterial') ? ', ' : ''}${material.includes('MeshWobbleMaterial') ? 'MeshWobbleMaterial' : ''} } from '@react-three/drei'` : '';
@@ -298,6 +299,6 @@ async function main() {
   }
 }
 
-main();
+main().catch(console.error);
 
 module.exports = { genesis, consultTheVisionary, invokeTheScribe, dispatchTheBuilder };
