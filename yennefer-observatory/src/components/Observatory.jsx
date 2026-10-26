@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import '../App.css'
 
 // DYNAMIC IMPORT: Auto-discover any NEW components "The Builder" creates
-const mutations = import.meta.glob('./mutations/*.jsx', { eager: true })
+const mutations = import.meta.glob('./generated/*.jsx', { eager: true })
 
 export function Observatory({ soul, evolution }) {
   return (
