@@ -11,7 +11,7 @@ const PATHS = {
   soul: '/dev/shm/yennefer_soul_state.json',
   mind: path.join(__dirname, '../yennefer-observatory/public/evolution.json'),
   body: path.join(__dirname, '../yennefer-observatory/src/components/generated'),
-  journal: '/home/yenn/.yennefer/genesis_journal.jsonl'
+  journal: path.join(__dirname, 'genesis_journal.jsonl')
 };
 
 // --- CONFIGURATION ---
